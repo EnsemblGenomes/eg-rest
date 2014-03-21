@@ -30,9 +30,6 @@ BEGIN { extends 'Catalyst::Controller::REST'; }
 __PACKAGE__->config(
   default => 'application/json',
   map     => {
-		  'application/json' => [],
-		  'text/x-yaml'      => [],
-		  'text/xml'         => [],
 		  'text/plain'       => ['YAML'],});
 
 sub genome : Chained('/') PathPart('lookup/genome') :
@@ -47,7 +44,7 @@ sub genome_GET {
 	unless $dba;
   $c->log()->info("Exporting genes for $genome");
   my $genes = Bio::EnsEMBL::GenomeExporter->export_genes($dba);
-  $c->log()->info("Finished exporting genes for $genome");
+  $c->log()->info("Finished exporting ".scalar(@$genes)." genes for $genome");
   $self->status_ok($c, entity => $genes);
   return;
 }
