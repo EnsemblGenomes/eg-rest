@@ -47,7 +47,6 @@ sub _hash_gene {
   my ($self, $xa, $gene) = @_;
   my $gene_out = {id       => $gene->stable_id(),
 				  name     => $gene->external_name(),
-				  synonyms => $gene->display_xref()->get_all_synonyms(),
 				  biotype  => $gene->biotype(),
 				  description     => $gene->description(),
 				  start           => $gene->seq_region_start(),
@@ -55,6 +54,9 @@ sub _hash_gene {
 				  strand          => $gene->seq_region_strand(),
 				  seq_region_name => $gene->seq_region_name(),
 				  transcripts     => []};
+  if(defined                   $gene->display_xref()) {
+      $gene_out->{synonyms} = $gene->display_xref()->get_all_synonyms();
+  }
   for my $dbentry (@{$xa->fetch_all_by_Gene($gene)}) {
 	push @{$gene_out->{xrefs}}, $self->_hash_xref($dbentry);
   }
