@@ -36,10 +36,6 @@ my $dba     = Bio::EnsEMBL::Test::MultiTestDB->new($species);
 Catalyst::Test->import('EnsEMBL::REST');
 
 {
-  my $json = json_GET('/info/eg_version', 'EG version');
-  is(eg_version(), $json->{version});
-}
-{
   for my $dba (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors()}) {
 	print '->' . $dba->species() . "\n";
   }
@@ -65,24 +61,5 @@ Catalyst::Test->import('EnsEMBL::REST');
   is(11, $nTranslations, 'Translation count');
   is(63, $nFeatures,     'Feature count');
 }
-
-# setup lookup and insert into the context
-my($res, $c) = ctx_request('index.html'); 
-my $multi     = Bio::EnsEMBL::Test::MultiTestDB->new('eg');
-my $gdba = $multi->get_DBAdaptor('info');
-my $tax = $multi->get_DBAdaptor('tax');
-$gdba->taxonomy_adaptor($tax);
-
-isa_ok(  $gdba, 'Bio::EnsEMBL::Utils::MetaData::DBSQL::GenomeInfoAdaptor' );
-
-my $lookup = Bio::EnsEMBL::LookUp::RemoteLookUp->new(
-							 -USER    => $gdba->{dbc}->user(),
-							 -PASS    => $gdba->{dbc}->pass(),
-							 -PORT    => $gdba->{dbc}->port(),
-							 -HOST    => $gdba->{dbc}->host(),
-							 -ADAPTOR => $gdba );
-isa_ok(  $lookup, 'Bio::EnsEMBL::LookUp::RemoteLookUp' );
-$c->model('Registry')->_lookup($lookup);
-isa_ok(  $c->model('Registry')->_lookup(), 'Bio::EnsEMBL::LookUp::RemoteLookUp' );
 
 done_testing();
