@@ -29,7 +29,6 @@ use Catalyst::Test ();
 use Bio::EnsEMBL::Test::MultiTestDB;
 use Bio::EnsEMBL::Test::TestUtils;
 use Bio::EnsEMBL::EGVersion;
-use Data::Dumper;
 
 Catalyst::Test->import('EnsEMBL::REST');
 

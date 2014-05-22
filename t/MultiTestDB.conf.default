@@ -11,6 +11,9 @@
     'eg' => {
       'info' => 'Bio::EnsEMBL::Utils::MetaData::DBSQL::GenomeInfoAdaptor',
       'tax' => 'Bio::EnsEMBL::DBSQL::TaxonomyDBAdaptor',
-    },
+     }, 
+     multi => {
+      'compara' => 'Bio::EnsEMBL::Compara::DBSQL::DBAdaptor',
+     }
   },
 }
