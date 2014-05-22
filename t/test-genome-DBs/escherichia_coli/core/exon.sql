@@ -1,8 +1,8 @@
--- MySQL dump 10.14  Distrib 5.5.33a-MariaDB, for Linux (x86_64)
+-- MySQL dump 10.13  Distrib 5.1.61, for redhat-linux-gnu (x86_64)
 --
--- Host: localhost    Database: test_escherichia_coli_core_21_74_1
+-- Host: mysql-eg-devel-1.ebi.ac.uk    Database: test_escherichia_coli_core
 -- ------------------------------------------------------
--- Server version	5.5.33a-MariaDB
+-- Server version	5.5.36-log
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -37,7 +37,7 @@ CREATE TABLE `exon` (
   PRIMARY KEY (`exon_id`),
   KEY `seq_region_idx` (`seq_region_id`,`seq_region_start`),
   KEY `stable_id_idx` (`stable_id`,`version`)
-) ENGINE=MyISAM AUTO_INCREMENT=3668 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=3714 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -48,4 +48,4 @@ CREATE TABLE `exon` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2013-11-05 20:27:36
+-- Dump completed on 2014-05-22 16:59:34
