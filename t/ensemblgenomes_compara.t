@@ -77,7 +77,6 @@ Catalyst::Test->import('EnsEMBL::REST');
   isa_ok( $json, 'ARRAY' );
   is( scalar( @{$json} ),      1,    'Expected number of families' );
   is( $json->[0]->{stable_id}, $fid, 'Expected family' );
-  print Dumper($json->[0]->{members});
   ok(
 	scalar(
 	  grep {
