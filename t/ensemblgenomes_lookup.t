@@ -56,8 +56,8 @@ Catalyst::Test->import('EnsEMBL::REST');
 	  }
 	}
   }
-  is(11, $nGenes,        'Gene count');
-  is(11, $nTranscripts,  'Transcript count');
+  is(12, $nGenes,        'Gene count');
+  is(12, $nTranscripts,  'Transcript count');
   is(11, $nTranslations, 'Translation count');
   is(63, $nFeatures,     'Feature count');
 }
