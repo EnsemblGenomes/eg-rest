@@ -154,6 +154,8 @@ sub genomes_taxonomy_GET {
 	->info("Retrieving information about genomes from taxon $taxon");
   my @infos = map { $_->to_hash($expand) }
 	@{ $lookup->_adaptor()->fetch_all_by_taxonomy_branch($taxon) };
+  $c->log()
+	->info( "Found " . scalar(@infos) . " genomes from taxon $taxon" );
   $self->status_ok( $c, entity => \@infos );
   return;
 }
