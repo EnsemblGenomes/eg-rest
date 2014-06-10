@@ -82,7 +82,7 @@ sub family_member_GET {
   my $ma = $s->{gene_member_adaptor};
 
   $self->status_ok( $c,
-					entity => _member_to_families( $ma, $fa, $id ) );
+					entity => _member_to_families( $c, $ma, $fa, $id ) );
 
   return;
 }
@@ -123,7 +123,7 @@ sub family_member_symbol_GET {
   my $fa = $s->{family_adaptor};
   my $ma = $s->{gene_member_adaptor};
   for my $id (@gene_stable_ids) {
-	for my $family ( @{ _member_to_families( $ma, $fa, $id ) } ) {
+	for my $family ( @{ _member_to_families( $c, $ma, $fa, $id ) } ) {
 	  push @$families, $family;
 	}
   }
@@ -146,8 +146,16 @@ sub _family_to_hash {
 }
 
 sub _member_to_families {
-  my ( $ma, $fa, $id ) = @_;
+  my ( $c, $ma, $fa, $id ) = @_;
   my $member = $ma->fetch_by_source_stable_id( undef, $id );
+  unless ( defined $member ) {
+	$c->log->fatal(qq{Nothing found in DB for : [$id]});
+	$c->go( 'ReturnError', 'custom',
+			[qq{No content for [$id]}] );
+  }
+  if(ref $member eq 'Bio::EnsEMBL::Compara::GeneMember') {
+  	$member = $member->get_canonical_SeqMember();
+  }
   my $families = [];
   for my $family ( @{ $fa->fetch_all_by_Member($member) } ) {
 	push @$families, _family_to_hash($family);
