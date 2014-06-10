@@ -136,7 +136,7 @@ sub _family_to_hash {
   my ($family) = @_;
   my $hash = { stable_id   => $family->stable_id(),
 			   description => $family->description() };
-  for my $member ( @{ $family->get_all_Members() } ) {
+  for my $member ( @{ $family->get_all_GeneMembers() } ) {
 	push @{ $hash->{members} },
 	  { stable_id     => $member->stable_id(),
 		display_label => $member->display_label(),
@@ -148,7 +148,6 @@ sub _family_to_hash {
 sub _member_to_families {
   my ( $ma, $fa, $id ) = @_;
   my $member = $ma->fetch_by_source_stable_id( undef, $id );
-
   my $families = [];
   for my $family ( @{ $fa->fetch_all_by_Member($member) } ) {
 	push @$families, _family_to_hash($family);
