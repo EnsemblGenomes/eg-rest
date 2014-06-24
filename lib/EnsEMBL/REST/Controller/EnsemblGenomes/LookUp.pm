@@ -21,7 +21,7 @@ package EnsEMBL::REST::Controller::EnsemblGenomes::LookUp;
 
 use Moose;
 use namespace::autoclean;
-use Bio::EnsEMBL::GenomeExporter;
+use Bio::EnsEMBL::GenomeExporter::GenomeExporterBulk;
 use Bio::EnsEMBL::EGVersion;
 use Try::Tiny;
 require EnsEMBL::REST;
@@ -44,7 +44,7 @@ sub genome_GET {
 		  ["Could not fetch adaptor for $genome"] )
 	unless $dba;
   $c->log()->info("Exporting genes for $genome");
-  my $genes = Bio::EnsEMBL::GenomeExporter->export_genes($dba);
+  my $genes = Bio::EnsEMBL::GenomeExporter::GenomeExporterBulk->export_genes($dba);
   $c->log()
 	->info(
 	   "Finished exporting " . scalar(@$genes) . " genes for $genome" );

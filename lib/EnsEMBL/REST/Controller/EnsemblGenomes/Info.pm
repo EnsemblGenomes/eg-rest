@@ -21,7 +21,6 @@ package EnsEMBL::REST::Controller::EnsemblGenomes::Info;
 
 use Moose;
 use namespace::autoclean;
-use Bio::EnsEMBL::GenomeExporter;
 use Bio::EnsEMBL::EGVersion;
 use Try::Tiny;
 require EnsEMBL::REST;
