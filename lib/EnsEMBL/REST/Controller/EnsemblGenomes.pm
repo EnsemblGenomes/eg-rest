@@ -20,7 +20,7 @@ package EnsEMBL::REST::Controller::EnsemblGenomes;
 
 use Moose;
 use namespace::autoclean;
-use Bio::EnsEMBL::GenomeExporter;
+use Bio::EnsEMBL::GenomeExporter::GenomeExporterBulk;
 use Bio::EnsEMBL::EGVersion;
 require EnsEMBL::REST;
 EnsEMBL::REST->turn_on_config_serialisers(__PACKAGE__);
@@ -43,6 +43,7 @@ sub genome_GET {
 		 ["Could not fetch adaptor for $genome"])
 	unless $dba;
   $c->log()->info("Exporting genes for $genome");
+  my $genes = Bio::EnsEMBL::GenomeExporter::GenomeExporterBulk->export_genes($dba);
   my $genes = Bio::EnsEMBL::GenomeExporter->export_genes($dba);
   $c->log()->info("Finished exporting ".scalar(@$genes)." genes for $genome");
   $self->status_ok($c, entity => $genes);

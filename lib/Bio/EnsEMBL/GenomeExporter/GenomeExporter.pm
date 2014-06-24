@@ -20,7 +20,7 @@ limitations under the License.
 use warnings;
 use strict;
 
-package Bio::EnsEMBL::GenomeExporter;
+package Bio::EnsEMBL::GenomeExporter::GenomeExporterApi;
 
 sub export_genes {
   my ($self, $dba, $biotypes) = @_;
