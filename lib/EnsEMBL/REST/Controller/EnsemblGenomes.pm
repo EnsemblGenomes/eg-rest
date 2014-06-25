@@ -44,7 +44,6 @@ sub genome_GET {
 	unless $dba;
   $c->log()->info("Exporting genes for $genome");
   my $genes = Bio::EnsEMBL::GenomeExporter::GenomeExporterBulk->export_genes($dba);
-  my $genes = Bio::EnsEMBL::GenomeExporter->export_genes($dba);
   $c->log()->info("Finished exporting ".scalar(@$genes)." genes for $genome");
   $self->status_ok($c, entity => $genes);
   return;
