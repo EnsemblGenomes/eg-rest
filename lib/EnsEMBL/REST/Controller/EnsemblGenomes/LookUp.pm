@@ -38,13 +38,17 @@ sub genome : Chained('/') PathPart('lookup/genome') :
 
 sub genome_GET {
   my ( $self, $c, $genome ) = @_;
-  $c->log()->info("Getting DBA for $genome");
+  
+  my $level = $c->request->param( 'level' )||'gene';
+  my @biotypes = split(',',$c->request->param( 'biotypes' )||'');
+  my $xrefs = $c->request->param( 'xrefs')||'0';
+  $c->log()->info("Getting DBA for $genome (level=$level,xrefs=$xrefs,biotypes=".join(',',@biotypes).")");
   my $dba = $c->model('Registry')->get_DBAdaptor( $genome, 'core', 1 );
   $c->go( 'ReturnError', 'custom',
 		  ["Could not fetch adaptor for $genome"] )
 	unless $dba;
   $c->log()->info("Exporting genes for $genome");
-  my $genes = Bio::EnsEMBL::GenomeExporter::GenomeExporterBulk->export_genes($dba);
+  my $genes = Bio::EnsEMBL::GenomeExporter::GenomeExporterBulk->export_genes($dba,\@biotypes,$level,$xrefs);
   $c->log()
 	->info(
 	   "Finished exporting " . scalar(@$genes) . " genes for $genome" );
