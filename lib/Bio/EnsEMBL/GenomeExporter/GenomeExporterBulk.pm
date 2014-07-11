@@ -24,15 +24,20 @@ use strict;
 package Bio::EnsEMBL::GenomeExporter::GenomeExporterBulk;
 
 sub export_genes {
-  my ( $self, $dba, $biotypes ) = @_;
+  my ( $self, $dba, $biotypes, $level, $load_xrefs ) = @_;
+  if ( !defined $level ) {
+	$level = 'gene';
+  }
+  if ( !defined $load_xrefs ) {
+	$load_xrefs = 0;
+  }
   # query for all genes, hash by ID
-  my $genes = $self->get_genes( $dba, $biotypes );
+  my $genes = $self->get_genes( $dba, $biotypes, $level, $load_xrefs );
   return [ values %$genes ];
 }
 
 sub get_genes {
-  my ( $self, $dba, $biotypes ) = @_;
-
+  my ( $self, $dba, $biotypes, $level, $load_xrefs ) = @_;
   my $biotype_sql = '';
   if ( defined $biotypes && scalar(@$biotypes) > 0 ) {
 	$biotype_sql = ' and g.biotype in (' .
@@ -59,15 +64,23 @@ sub get_genes {
   while ( my ( $gene_id, $synonym ) = each %$synonyms ) {
 	$genes->{$gene_id}->{synonyms} = $synonym;
   }
-  # query for all xrefs, hash by gene ID
-  my $xrefs = $self->get_xrefs( $dba, 'gene', $biotypes );
-  while ( my ( $gene_id, $xref ) = each %$xrefs ) {
-	$genes->{$gene_id}->{xrefs} = $xref;
+  if ( $load_xrefs == 1 ) {
+	# query for all xrefs, hash by gene ID
+	my $xrefs = $self->get_xrefs( $dba, 'gene', $biotypes );
+	while ( my ( $gene_id, $xref ) = each %$xrefs ) {
+	  $genes->{$gene_id}->{xrefs} = $xref;
+	}
   }
-  # query for transcripts, hash by gene ID
-  my $transcripts = $self->get_transcripts( $dba, $biotypes );
-  while ( my ( $gene_id, $transcript ) = each %$transcripts ) {
-	$genes->{$gene_id}->{transcripts} = $transcript;
+  if ( $level eq 'transcript' ||
+	   $level eq 'translation' ||
+	   $level eq 'protein_feature' )
+  {
+	# query for transcripts, hash by gene ID
+	my $transcripts =
+	  $self->get_transcripts( $dba, $biotypes, $level, $load_xrefs );
+	while ( my ( $gene_id, $transcript ) = each %$transcripts ) {
+	  $genes->{$gene_id}->{transcripts} = $transcript;
+	}
   }
   return $genes;
 } ## end sub get_genes
@@ -100,7 +113,7 @@ sub get_synonyms {
 } ## end sub get_synonyms
 
 sub get_transcripts {
-  my ( $self, $dba, $biotypes ) = @_;
+  my ( $self, $dba, $biotypes, $level, $load_xrefs ) = @_;
 
   my $biotype_sql = '';
   if ( defined $biotypes && scalar(@$biotypes) > 0 ) {
@@ -108,9 +121,16 @@ sub get_transcripts {
 	  join( ',', map { "'$_'" } @$biotypes ) . ')';
   }
 
-  my $xrefs = $self->get_xrefs( $dba, 'transcript', $biotypes );
+  my $xrefs = {};
+  if ( $load_xrefs == 1 ) {
+	$self->get_xrefs( $dba, 'transcript', $biotypes );
+  }
 
-  my $translations = $self->get_translations( $dba, $biotypes );
+  my $translations = {};
+  if ( $level eq 'translation' || $level eq 'protein_feature' ) {
+	$translations =
+	  $self->get_translations( $dba, $biotypes, $level, $load_xrefs );
+  }
 
   my @transcripts = @{
 	$dba->dbc()->sql_helper()->execute(
@@ -140,26 +160,31 @@ sub get_transcripts {
 
   my $transcripts = {};
   for my $transcript (@transcripts) {
-  	push @{$transcripts->{$transcript->{gene_id}}}, $transcript;
+	push @{ $transcripts->{ $transcript->{gene_id} } }, $transcript;
   }
-  
+
   return $transcripts;
 
 } ## end sub get_transcripts
 
 sub get_translations {
-  my ( $self, $dba, $biotypes ) = @_;
+  my ( $self, $dba, $biotypes, $level, $load_xrefs ) = @_;
 
   my $biotype_sql = '';
   if ( defined $biotypes && scalar(@$biotypes) > 0 ) {
 	$biotype_sql = ' and t.biotype in (' .
 	  join( ',', map { "'$_'" } @$biotypes ) . ')';
   }
-
-  my $xrefs = $self->get_xrefs( $dba, 'translation', $biotypes );
+  my $xrefs = {};
+  if ( $load_xrefs == 1 ) {
+	$xrefs = $self->get_xrefs( $dba, 'translation', $biotypes );
+  }
 
   # add protein features
-  my $protein_features = $self->get_protein_features( $dba, $biotypes );
+  my $protein_features = {};
+  if ( $level eq 'protein_feature' ) {
+	$protein_features = $self->get_protein_features( $dba, $biotypes );
+  }
 
   my @translations = @{
 	$dba->dbc()->sql_helper()->execute(
@@ -183,7 +208,8 @@ sub get_translations {
 
   my $translations = {};
   for my $translation (@translations) {
-  	push @{$translations->{$translation->{transcript_id}}}, $translation;
+	push @{ $translations->{ $translation->{transcript_id} } },
+	  $translation;
   }
 
   return $translations;
@@ -224,7 +250,8 @@ sub get_protein_features {
 
   my $protein_features = {};
   for my $protein_feature (@protein_features) {
-  	push @{$protein_features->{$protein_feature->{translation_id}}}, $protein_feature;
+	push @{ $protein_features->{ $protein_feature->{translation_id} } },
+	  $protein_feature;
   }
 
   return $protein_features;
@@ -242,7 +269,7 @@ sub get_xrefs {
 
   my $sql;
   my $oox_sql;
-  if ( $type eq 'gene' ) {  	
+  if ( $type eq 'gene' ) {
 	$sql = qq/
 	select g.stable_id as id, ox.object_xref_id, x.dbprimary_acc, x.display_label, e.db_name
 	from gene g
@@ -359,7 +386,7 @@ sub get_xrefs {
 	  return;
 	} );
   for my $xref ( values %{$oox_xrefs} ) {
-	push @{$xrefs->{$xref->{obj_id}}}, $xref;
+	push @{ $xrefs->{ $xref->{obj_id} } }, $xref;
 	delete $xref->{obj_id};
   }
 
