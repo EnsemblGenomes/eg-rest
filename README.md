@@ -2,5 +2,6 @@ eg-rest
 =======
 
 Ensembl Genomes REST interface plugins
-/info/eg_version
-/lookup/genome/:name
+
+For more details, see:
+https://github.com/EnsemblGenomes/eg-rest/wiki/Ensembl-Genomes-REST-Endpoints
