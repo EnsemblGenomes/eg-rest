@@ -44,6 +44,13 @@
     </div><!-- navbar--> 
     <br>
 
+[% IF c.request.env.HTTP_HOST == 'beta.rest.ensemblgenomes.org' %]
+<div class="alert alert-error">
+    <h4>This server is no longer supported and will be retired. Please use <a href="http://rest.ensemblgenomes.org">http://rest.ensemblgenomes.org</a> instead.
+    </h4>
+</div>
+[% END %]
+
     <span class="message">[% status_msg %]</span>
     <span class="error">[% error_msg %]</span>
     [% content %]
