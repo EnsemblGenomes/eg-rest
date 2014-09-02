@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 5.1.61, for redhat-linux-gnu (x86_64)
 --
--- Host: mysql-eg-devel-1.ebi.ac.uk    Database: test_ensembl_compara_bacteria_22_75
+-- Host: mysql-eg-enaprod.ebi.ac.uk    Database: ensembl_compara_family_test
 -- ------------------------------------------------------
 -- Server version	5.5.36-log
 
@@ -22,16 +22,16 @@ DROP TABLE IF EXISTS `homology_member`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `homology_member` (
   `homology_id` int(10) unsigned NOT NULL,
-  `member_id` int(10) unsigned NOT NULL,
-  `peptide_member_id` int(10) unsigned DEFAULT NULL,
+  `gene_member_id` int(10) unsigned NOT NULL,
+  `seq_member_id` int(10) unsigned DEFAULT NULL,
   `cigar_line` mediumtext,
   `perc_cov` tinyint(3) unsigned DEFAULT '0',
   `perc_id` tinyint(3) unsigned DEFAULT '0',
   `perc_pos` tinyint(3) unsigned DEFAULT '0',
-  PRIMARY KEY (`homology_id`,`member_id`),
+  PRIMARY KEY (`homology_id`,`gene_member_id`),
   KEY `homology_id` (`homology_id`),
-  KEY `member_id` (`member_id`),
-  KEY `peptide_member_id` (`peptide_member_id`)
+  KEY `gene_member_id` (`gene_member_id`),
+  KEY `seq_member_id` (`seq_member_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 MAX_ROWS=300000000 CHECKSUM=1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -43,4 +43,4 @@ CREATE TABLE `homology_member` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-05-22 14:39:54
+-- Dump completed on 2014-09-02 11:17:22

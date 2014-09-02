@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 5.1.61, for redhat-linux-gnu (x86_64)
 --
--- Host: mysql-eg-devel-1.ebi.ac.uk    Database: test_ensembl_compara_bacteria_22_75
+-- Host: mysql-eg-enaprod.ebi.ac.uk    Database: ensembl_compara_family_test
 -- ------------------------------------------------------
 -- Server version	5.5.36-log
 
@@ -23,7 +23,7 @@ DROP TABLE IF EXISTS `genome_db`;
 CREATE TABLE `genome_db` (
   `genome_db_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `taxon_id` int(10) unsigned DEFAULT NULL,
-  `name` varchar(128) DEFAULT NULL,
+  `name` varchar(128) NOT NULL DEFAULT '',
   `assembly` varchar(100) NOT NULL DEFAULT '',
   `assembly_default` tinyint(1) DEFAULT '1',
   `genebuild` varchar(100) NOT NULL DEFAULT '',
@@ -33,7 +33,7 @@ CREATE TABLE `genome_db` (
   PRIMARY KEY (`genome_db_id`),
   UNIQUE KEY `name` (`name`,`assembly`,`genebuild`),
   KEY `taxon_id` (`taxon_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=11011 DEFAULT CHARSET=latin1 CHECKSUM=1;
+) ENGINE=MyISAM AUTO_INCREMENT=15271 DEFAULT CHARSET=latin1 CHECKSUM=1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -44,4 +44,4 @@ CREATE TABLE `genome_db` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-05-22 14:39:54
+-- Dump completed on 2014-09-02 11:17:22

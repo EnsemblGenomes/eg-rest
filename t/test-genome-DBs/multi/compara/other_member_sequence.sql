@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 5.1.61, for redhat-linux-gnu (x86_64)
 --
--- Host: mysql-eg-devel-1.ebi.ac.uk    Database: test_ensembl_compara_bacteria_22_75
+-- Host: mysql-eg-enaprod.ebi.ac.uk    Database: ensembl_compara_family_test
 -- ------------------------------------------------------
 -- Server version	5.5.36-log
 
@@ -21,11 +21,11 @@ DROP TABLE IF EXISTS `other_member_sequence`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `other_member_sequence` (
-  `member_id` int(10) unsigned NOT NULL,
+  `seq_member_id` int(10) unsigned NOT NULL,
   `seq_type` varchar(40) NOT NULL,
   `length` int(10) NOT NULL,
   `sequence` mediumtext NOT NULL,
-  PRIMARY KEY (`member_id`,`seq_type`)
+  PRIMARY KEY (`seq_member_id`,`seq_type`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 MAX_ROWS=10000000 AVG_ROW_LENGTH=60000 CHECKSUM=1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -37,4 +37,4 @@ CREATE TABLE `other_member_sequence` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-05-22 14:40:02
+-- Dump completed on 2014-09-02 11:17:23

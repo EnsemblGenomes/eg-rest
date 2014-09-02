@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 5.1.61, for redhat-linux-gnu (x86_64)
 --
--- Host: mysql-eg-devel-1.ebi.ac.uk    Database: test_ensembl_compara_bacteria_22_75
+-- Host: mysql-eg-enaprod.ebi.ac.uk    Database: ensembl_compara_family_test
 -- ------------------------------------------------------
 -- Server version	5.5.36-log
 
@@ -21,10 +21,10 @@ DROP TABLE IF EXISTS `member_xref`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `member_xref` (
-  `member_id` int(10) unsigned NOT NULL,
+  `gene_member_id` int(10) unsigned NOT NULL,
   `dbprimary_acc` varchar(10) NOT NULL,
   `external_db_id` int(10) unsigned NOT NULL,
-  PRIMARY KEY (`member_id`,`dbprimary_acc`,`external_db_id`),
+  PRIMARY KEY (`gene_member_id`,`dbprimary_acc`,`external_db_id`),
   KEY `external_db_id` (`external_db_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 CHECKSUM=1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -37,4 +37,4 @@ CREATE TABLE `member_xref` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-05-22 14:40:02
+-- Dump completed on 2014-09-02 11:17:22

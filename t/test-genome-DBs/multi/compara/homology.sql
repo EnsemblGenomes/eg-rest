@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 5.1.61, for redhat-linux-gnu (x86_64)
 --
--- Host: mysql-eg-devel-1.ebi.ac.uk    Database: test_ensembl_compara_bacteria_22_75
+-- Host: mysql-eg-enaprod.ebi.ac.uk    Database: ensembl_compara_family_test
 -- ------------------------------------------------------
 -- Server version	5.5.36-log
 
@@ -23,7 +23,7 @@ DROP TABLE IF EXISTS `homology`;
 CREATE TABLE `homology` (
   `homology_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `method_link_species_set_id` int(10) unsigned NOT NULL,
-  `description` enum('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','gene_split','between_species_paralog','alt_allele') DEFAULT NULL,
+  `description` enum('ortholog_one2one','ortholog_one2many','ortholog_many2many','within_species_paralog','other_paralog','gene_split','between_species_paralog','alt_allele','homoeolog_one2one','homoeolog_one2many','homoeolog_many2many') DEFAULT NULL,
   `is_tree_compliant` tinyint(1) NOT NULL DEFAULT '0',
   `dn` float(10,5) DEFAULT NULL,
   `ds` float(10,5) DEFAULT NULL,
@@ -49,4 +49,4 @@ CREATE TABLE `homology` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-05-22 14:39:54
+-- Dump completed on 2014-09-02 11:17:22

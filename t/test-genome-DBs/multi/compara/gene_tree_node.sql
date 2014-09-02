@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 5.1.61, for redhat-linux-gnu (x86_64)
 --
--- Host: mysql-eg-devel-1.ebi.ac.uk    Database: test_ensembl_compara_bacteria_22_75
+-- Host: mysql-eg-enaprod.ebi.ac.uk    Database: ensembl_compara_family_test
 -- ------------------------------------------------------
 -- Server version	5.5.36-log
 
@@ -27,10 +27,10 @@ CREATE TABLE `gene_tree_node` (
   `left_index` int(10) NOT NULL DEFAULT '0',
   `right_index` int(10) NOT NULL DEFAULT '0',
   `distance_to_parent` double NOT NULL DEFAULT '1',
-  `member_id` int(10) unsigned DEFAULT NULL,
+  `seq_member_id` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`node_id`),
   KEY `parent_id` (`parent_id`),
-  KEY `member_id` (`member_id`),
+  KEY `seq_member_id` (`seq_member_id`),
   KEY `root_id` (`root_id`),
   KEY `root_id_left_index` (`root_id`,`left_index`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 CHECKSUM=1;
@@ -44,4 +44,4 @@ CREATE TABLE `gene_tree_node` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-05-22 14:39:54
+-- Dump completed on 2014-09-02 11:17:22

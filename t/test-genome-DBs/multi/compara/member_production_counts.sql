@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 5.1.61, for redhat-linux-gnu (x86_64)
 --
--- Host: mysql-eg-devel-1.ebi.ac.uk    Database: test_ensembl_compara_bacteria_22_75
+-- Host: mysql-eg-enaprod.ebi.ac.uk    Database: ensembl_compara_family_test
 -- ------------------------------------------------------
 -- Server version	5.5.36-log
 
@@ -27,6 +27,7 @@ CREATE TABLE `member_production_counts` (
   `gene_gain_loss_trees` tinyint(1) unsigned DEFAULT '0',
   `orthologues` int(10) unsigned DEFAULT '0',
   `paralogues` int(10) unsigned DEFAULT '0',
+  `homoeologues` int(10) unsigned DEFAULT '0',
   KEY `stable_id` (`stable_id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 CHECKSUM=1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -39,4 +40,4 @@ CREATE TABLE `member_production_counts` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-05-22 14:40:02
+-- Dump completed on 2014-09-02 11:17:22
