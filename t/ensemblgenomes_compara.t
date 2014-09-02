@@ -41,12 +41,13 @@ Catalyst::Test->import('EnsEMBL::REST');
   isa_ok( $json, 'HASH' );
   is( $json->{stable_id}, $id, 'Expected family ID' );
   is( scalar( @{ $json->{members} } ),
-	  2074, 'Expected number of members' );
+	  2290, 'Expected number of members' );
 }
 
 {
   my $id  = 'b0344';
   my $fid = 'MF_01687';
+  my $genome = 'escherichia_coli_str_k_12_substr_mg1655';
   my $json =
 	json_GET( '/family/member/id/' . $id, 'Families for member' );
   isa_ok( $json, 'ARRAY' );
@@ -55,6 +56,9 @@ Catalyst::Test->import('EnsEMBL::REST');
   ok( scalar( grep { $_->{stable_id} eq $id } @{ $json->[0]->{members} }
 	  ),
 	  'Expected member' );
+  ok( scalar( grep { $_->{genome} eq $genome } @{ $json->[0]->{members} }
+	  ),
+	  'Expected member genome db' );
 }
 
 {
@@ -80,7 +84,8 @@ Catalyst::Test->import('EnsEMBL::REST');
   ok(
 	scalar(
 	  grep {
-		defined $_->{display_label} && $_->{display_label} eq $id
+		defined $_->{display_label} &&
+		  $_->{display_label} eq $id
 	  } @{ $json->[0]->{members} } ),
 	'Expected member' );
 }

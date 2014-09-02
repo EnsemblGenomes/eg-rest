@@ -81,7 +81,7 @@ sub family_member_GET {
   my $ma = $s->{gene_member_adaptor};
 
   $self->status_ok( $c,
-					entity => _member_to_families( $c, $ma, $fa, $id ) );
+				   entity => _member_to_families( $c, $ma, $fa, $id ) );
 
   return;
 }
@@ -135,28 +135,29 @@ sub _family_to_hash {
   my ($family) = @_;
   my $hash = { stable_id   => $family->stable_id(),
 			   description => $family->description() };
-  for my $member ( @{ $family->get_all_GeneMembers() } ) {
+  for my $member ( @{ $family->get_all_Members() } ) {
+	my $gmember = $member->gene_member();
 	push @{ $hash->{members} },
-	  { stable_id     => $member->stable_id(),
-		display_label => $member->display_label(),
-		description   => $member->description() };
+	  { stable_id     => $gmember->stable_id(),
+		display_label => $gmember->display_label(),
+		description   => $gmember->description(),
+		genome        => $gmember->genome_db()->name() };
   }
   return $hash;
 }
 
 sub _member_to_families {
   my ( $c, $ma, $fa, $id ) = @_;
-  my $member = $ma->fetch_by_source_stable_id( undef, $id );
+  my $member = $ma->fetch_by_stable_id($id);
   unless ( defined $member ) {
 	$c->log->fatal(qq{Nothing found in DB for : [$id]});
-	$c->go( 'ReturnError', 'custom',
-			[qq{No content for [$id]}] );
+	$c->go( 'ReturnError', 'custom', [qq{No content for [$id]}] );
   }
-  if(ref $member eq 'Bio::EnsEMBL::Compara::GeneMember') {
-  	$member = $member->get_canonical_SeqMember();
+  if ( ref $member eq 'Bio::EnsEMBL::Compara::SeqMember' ) {
+	$member = $member->get_GeneMember();
   }
   my $families = [];
-  for my $family ( @{ $fa->fetch_all_by_Member($member) } ) {
+  for my $family ( @{ $fa->fetch_all_by_GeneMember($member) } ) {
 	push @$families, _family_to_hash($family);
   }
   return $families;
