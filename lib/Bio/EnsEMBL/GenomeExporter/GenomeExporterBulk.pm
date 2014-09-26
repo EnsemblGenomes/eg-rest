@@ -20,16 +20,33 @@ limitations under the License.
 
 use warnings;
 use strict;
-
 package Bio::EnsEMBL::GenomeExporter::GenomeExporterBulk;
+
+use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+
+
+sub new {
+  my ( $class, @args ) = @_;
+  my $self = bless( {}, ref($class) || $class );
+  ( $self->{biotypes}, $self->{level}, $self->{load_xrefs} ) =
+	rearrange( [ 'BIOTYPES', 'LEVEL', 'LOAD_XREFS' ], @args );
+	$self->{load_xrefs} ||= 0;
+	$self->{level} ||= 'gene';
+  return $self;
+}
 
 sub export_genes {
   my ( $self, $dba, $biotypes, $level, $load_xrefs ) = @_;
+  
+  if(!defined $biotypes) {
+  	$biotypes = $self->{biotypes};
+  }
+  
   if ( !defined $level ) {
-	$level = 'gene';
+	$level = $self->{level};
   }
   if ( !defined $load_xrefs ) {
-	$load_xrefs = 0;
+	$load_xrefs = $self->{load_xrefs};
   }
   # query for all genes, hash by ID
   my $genes = $self->get_genes( $dba, $biotypes, $level, $load_xrefs );
