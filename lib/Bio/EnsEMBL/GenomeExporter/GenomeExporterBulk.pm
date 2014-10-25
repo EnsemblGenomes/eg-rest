@@ -178,6 +178,7 @@ sub get_transcripts {
   my $transcripts = {};
   for my $transcript (@transcripts) {
 	push @{ $transcripts->{ $transcript->{gene_id} } }, $transcript;
+	  delete $transcript->{gene_id};
   }
 
   return $transcripts;
@@ -227,6 +228,7 @@ sub get_translations {
   for my $translation (@translations) {
 	push @{ $translations->{ $translation->{transcript_id} } },
 	  $translation;
+	  delete $translation->{transcript_id};
   }
 
   return $translations;
@@ -269,6 +271,7 @@ sub get_protein_features {
   for my $protein_feature (@protein_features) {
 	push @{ $protein_features->{ $protein_feature->{translation_id} } },
 	  $protein_feature;
+	  delete $protein_feature->{translation_id};
   }
 
   return $protein_features;
@@ -288,7 +291,7 @@ sub get_xrefs {
   my $oox_sql;
   if ( $type eq 'gene' ) {
 	$sql = qq/
-	select g.stable_id as id, ox.object_xref_id, x.dbprimary_acc, x.display_label, e.db_name
+	select g.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name
 	from gene g
 	join object_xref ox on (g.gene_id=ox.ensembl_id and ox.ensembl_object_type='Gene')
 	join xref x using (xref_id)
@@ -314,7 +317,7 @@ sub get_xrefs {
   } ## end if ( $type eq 'gene' )
   elsif ( $type eq 'transcript' ) {
 	$sql = qq/
-	select g.stable_id as id, ox.object_xref_id, x.dbprimary_acc, x.display_label, e.db_name
+	select g.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name
 	from transcript g
 	join object_xref ox on (g.transcript_id=ox.ensembl_id and ox.ensembl_object_type='Transcript')
 	join xref x using (xref_id)
@@ -340,7 +343,7 @@ sub get_xrefs {
   } ## end elsif ( $type eq 'transcript') [ if ( $type eq 'gene' )]
   elsif ( $type eq 'translation' ) {
 	$sql = qq/
-	select tl.stable_id as id, ox.object_xref_id, x.dbprimary_acc, x.display_label, e.db_name
+	select tl.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name
 	from transcript g
 	join translation tl using (transcript_id)
 	join object_xref ox on (tl.translation_id=ox.ensembl_id and ox.ensembl_object_type='Translation')
