@@ -20,28 +20,60 @@ limitations under the License.
 
 use warnings;
 use strict;
+
 package Bio::EnsEMBL::GenomeExporter::GenomeExporterBulk;
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
-
 
 sub new {
   my ( $class, @args ) = @_;
   my $self = bless( {}, ref($class) || $class );
   ( $self->{biotypes}, $self->{level}, $self->{load_xrefs} ) =
 	rearrange( [ 'BIOTYPES', 'LEVEL', 'LOAD_XREFS' ], @args );
-	$self->{load_xrefs} ||= 0;
-	$self->{level} ||= 'gene';
+  $self->{load_xrefs} ||= 0;
+  $self->{level}      ||= 'gene';
   return $self;
 }
 
+sub add_compara {
+  my ( $self, $species, $genes, $compara_dba ) = @_;
+  my $homologues = {};
+  $compara_dba->dbc()->sql_helper()->execute_no_return(
+	-SQL =>
+	  q/select hg.stable_id,gm.stable_id,g.name,h.description 
+	from (select homology_id,stable_id from homology_member 
+	join gene_member using (gene_member_id) 
+	join genome_db using (genome_db_id) where name=?) hg 
+	join homology h on (h.homology_id=hg.homology_id) 
+	join homology_member hm on (hm.homology_id=h.homology_id) 
+	join gene_member gm using (gene_member_id) 
+	join genome_db g using (genome_db_id) 
+	where gm.stable_id<>hg.stable_id/,
+	-CALLBACK => sub {
+	  my ($row) = @_;
+	  push @{ $homologues->{ $row->[0] } },
+		{ stable_id   => $row->[1],
+		  genome      => $row->[2],
+		  description => $row->[3] };
+	  return;
+	},
+	-PARAMS=>[$species]);
+  for my $gene ( @{$genes} ) {
+  	my $homo = $homologues->{ $gene->{id} };
+  	if(defined $homo) {
+		$gene->{homologues} = $homo;
+  	}
+  }
+  return;
+} ## end sub add_compara
+
 sub export_genes {
   my ( $self, $dba, $biotypes, $level, $load_xrefs ) = @_;
-  
-  if(!defined $biotypes) {
-  	$biotypes = $self->{biotypes};
+
+  if ( !defined $biotypes ) {
+	$biotypes = $self->{biotypes};
   }
-  
+
   if ( !defined $level ) {
 	$level = $self->{level};
   }
@@ -63,7 +95,7 @@ sub get_genes {
   my @genes = @{
 	$dba->dbc()->sql_helper()->execute(
 	  -SQL => qq/
-	select g.stable_id as id, x.display_label as name, g.description,
+	select g.stable_id as id, x.display_label as name, g.description, g.biotype,
 	g.seq_region_start as start, g.seq_region_end as end, g.seq_region_strand as strand,
 	s.name as seq_region_name
 	from gene g
@@ -156,6 +188,7 @@ sub get_transcripts {
   	t.stable_id as id,
   	x.display_label as name,
   	t.description, 
+  	t.biotype,
 	t.seq_region_start as start, t.seq_region_end as end, t.seq_region_strand as strand,
 	s.name as seq_region_name
   	from 
@@ -178,7 +211,7 @@ sub get_transcripts {
   my $transcripts = {};
   for my $transcript (@transcripts) {
 	push @{ $transcripts->{ $transcript->{gene_id} } }, $transcript;
-	  delete $transcript->{gene_id};
+	delete $transcript->{gene_id};
   }
 
   return $transcripts;
@@ -228,7 +261,7 @@ sub get_translations {
   for my $translation (@translations) {
 	push @{ $translations->{ $translation->{transcript_id} } },
 	  $translation;
-	  delete $translation->{transcript_id};
+	delete $translation->{transcript_id};
   }
 
   return $translations;
@@ -271,7 +304,7 @@ sub get_protein_features {
   for my $protein_feature (@protein_features) {
 	push @{ $protein_features->{ $protein_feature->{translation_id} } },
 	  $protein_feature;
-	  delete $protein_feature->{translation_id};
+	delete $protein_feature->{translation_id};
   }
 
   return $protein_features;
@@ -289,6 +322,7 @@ sub get_xrefs {
 
   my $sql;
   my $oox_sql;
+  my $ax_sql;
   if ( $type eq 'gene' ) {
 	$sql = qq/
 	select g.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name
@@ -313,6 +347,19 @@ sub get_xrefs {
 	left join xref sx on (oox.source_xref_id=sx.xref_id)
 	left join external_db se on (se.external_db_id=sx.external_db_id)
 	where c.species_id=? $biotype_sql
+	/;
+	$ax_sql = qq/
+	select ax.object_xref_id,ax.rank,ax.condition_type,x.dbprimary_acc,x.display_label,xe.db_name,sx.dbprimary_acc,sx.display_label,se.db_name 
+	from gene g
+	join object_xref ox on (g.gene_id=ox.ensembl_id and ox.ensembl_object_type='Gene')
+	join associated_xref ax using (object_xref_id) 
+	join xref x on (x.xref_id=ax.xref_id) 
+	join external_db xe on (x.external_db_id=xe.external_db_id) 
+	join xref sx on (sx.xref_id=ax.source_xref_id) 
+	join external_db se on (se.external_db_id=sx.external_db_id) 
+	join seq_region s using (seq_region_id)
+	join coord_system c using (coord_system_id)
+	where c.species_id=? $biotype_sql;
 	/;
   } ## end if ( $type eq 'gene' )
   elsif ( $type eq 'transcript' ) {
@@ -339,6 +386,19 @@ sub get_xrefs {
 	left join xref sx on (oox.source_xref_id=sx.xref_id)
 	left join external_db se on (se.external_db_id=sx.external_db_id)
 	where c.species_id=? $biotype_sql
+	/;
+	$ax_sql = qq/
+	select ax.object_xref_id,ax.rank,ax.condition_type,x.dbprimary_acc,x.display_label,xe.db_name,sx.dbprimary_acc,sx.display_label,se.db_name 
+	from transcript g
+	join object_xref ox on (g.gene_id=ox.ensembl_id and ox.ensembl_object_type='Transcript')
+	join associated_xref ax using (object_xref_id) 
+	join xref x on (x.xref_id=ax.xref_id) 
+	join external_db xe on (x.external_db_id=xe.external_db_id) 
+	join xref sx on (sx.xref_id=ax.source_xref_id) 
+	join external_db se on (se.external_db_id=sx.external_db_id) 
+	join seq_region s using (seq_region_id)
+	join coord_system c using (coord_system_id)
+	where c.species_id=? $biotype_sql;
 	/;
   } ## end elsif ( $type eq 'transcript') [ if ( $type eq 'gene' )]
   elsif ( $type eq 'translation' ) {
@@ -367,6 +427,20 @@ sub get_xrefs {
 	left join xref sx on (oox.source_xref_id=sx.xref_id)
 	left join external_db se on (se.external_db_id=sx.external_db_id)
 	where c.species_id=? $biotype_sql
+	/;
+	$ax_sql = qq/
+	select ax.object_xref_id,ax.rank,ax.condition_type,x.dbprimary_acc,x.display_label,xe.db_name,sx.dbprimary_acc,sx.display_label,se.db_name 
+	from transcript g
+	join translation tl using (transcript_id)
+	join object_xref ox on (tl.translation_id=ox.ensembl_id and ox.ensembl_object_type='Translation')
+	join associated_xref ax using (object_xref_id) 
+	join xref x on (x.xref_id=ax.xref_id) 
+	join external_db xe on (x.external_db_id=xe.external_db_id) 
+	join xref sx on (sx.xref_id=ax.source_xref_id) 
+	join external_db se on (se.external_db_id=sx.external_db_id) 
+	join seq_region s using (seq_region_id)
+	join coord_system c using (coord_system_id)
+	where c.species_id=? $biotype_sql;
 	/;
   } ## end elsif ( $type eq 'translation') [ if ( $type eq 'gene' )]
   my $xrefs = {};
@@ -405,6 +479,32 @@ sub get_xrefs {
 					  dbname     => $row->[8] } };
 	  return;
 	} );
+
+  # add associated_xrefs to $oox_xrefs
+  $dba->dbc()->sql_helper()->execute_no_return(
+	-SQL      => $ax_sql,
+	-PARAMS   => [ $dba->species_id() ],
+	-CALLBACK => sub {
+	  my ($row) = @_;
+	  my $xref = $oox_xrefs->{ $row->[0] };
+	  # add linkage type to $xref
+	  $xref->{associated_xrefs}->[ $row->[1] ] = {
+											  condition => $row->[2],
+											  target    => {
+												primary_id => $row->[3],
+												display_id => $row->[4],
+												dbname     => $row->[5]
+											  },
+											  source => {
+												primary_id => $row->[6],
+												display_id => $row->[7],
+												dbname     => $row->[8]
+											  } };
+
+	  return;
+	} );
+
+  # collate everything
   for my $xref ( values %{$oox_xrefs} ) {
 	push @{ $xrefs->{ $xref->{obj_id} } }, $xref;
 	delete $xref->{obj_id};
