@@ -39,8 +39,7 @@ sub add_compara {
   my ( $self, $species, $genes, $compara_dba ) = @_;
   my $homologues = {};
   $compara_dba->dbc()->sql_helper()->execute_no_return(
-	-SQL =>
-	  q/select hg.stable_id,gm.stable_id,g.name,h.description 
+	-SQL => q/select hg.stable_id,gm.stable_id,g.name,h.description 
 	from (select homology_id,stable_id from homology_member 
 	join member using (member_id) 
 	join genome_db using (genome_db_id) where name=? and source_name='ENSEMBLGENE') hg 
@@ -57,12 +56,12 @@ sub add_compara {
 		  description => $row->[3] };
 	  return;
 	},
-	-PARAMS=>[$species]);
+	-PARAMS => [$species] );
   for my $gene ( @{$genes} ) {
-  	my $homo = $homologues->{ $gene->{id} };
-  	if(defined $homo) {
-		$gene->{homologues} = $homo;
-  	}
+	my $homo = $homologues->{ $gene->{id} };
+	if ( defined $homo ) {
+	  $gene->{homologues} = $homo;
+	}
   }
   return;
 } ## end sub add_compara
@@ -349,7 +348,7 @@ sub get_xrefs {
 	where c.species_id=? $biotype_sql
 	/;
 	$ax_sql = qq/
-	select ax.object_xref_id,ax.rank,ax.condition_type,x.dbprimary_acc,x.display_label,xe.db_name,sx.dbprimary_acc,sx.display_label,se.db_name 
+	select ax.object_xref_id,ax.rank,ax.condition_type,x.dbprimary_acc,x.display_label,xe.db_name,sx.dbprimary_acc,sx.display_label,se.db_name, ax.associated_group_id 
 	from gene g
 	join object_xref ox on (g.gene_id=ox.ensembl_id and ox.ensembl_object_type='Gene')
 	join associated_xref ax using (object_xref_id) 
@@ -388,7 +387,7 @@ sub get_xrefs {
 	where c.species_id=? $biotype_sql
 	/;
 	$ax_sql = qq/
-	select ax.object_xref_id,ax.rank,ax.condition_type,x.dbprimary_acc,x.display_label,xe.db_name,sx.dbprimary_acc,sx.display_label,se.db_name 
+	select ax.object_xref_id,ax.rank,ax.condition_type,x.dbprimary_acc,x.display_label,xe.db_name,sx.dbprimary_acc,sx.display_label,se.db_name, ax.associated_group_id 
 	from transcript g
 	join object_xref ox on (g.gene_id=ox.ensembl_id and ox.ensembl_object_type='Transcript')
 	join associated_xref ax using (object_xref_id) 
@@ -429,7 +428,7 @@ sub get_xrefs {
 	where c.species_id=? $biotype_sql
 	/;
 	$ax_sql = qq/
-	select ax.object_xref_id,ax.rank,ax.condition_type,x.dbprimary_acc,x.display_label,xe.db_name,sx.dbprimary_acc,sx.display_label,se.db_name 
+	select ax.object_xref_id,ax.rank,ax.condition_type,x.dbprimary_acc,x.display_label,xe.db_name,sx.dbprimary_acc,sx.display_label,se.db_name, ax.associated_group_id
 	from transcript g
 	join translation tl using (transcript_id)
 	join object_xref ox on (tl.translation_id=ox.ensembl_id and ox.ensembl_object_type='Translation')
@@ -486,26 +485,35 @@ sub get_xrefs {
 	-PARAMS   => [ $dba->species_id() ],
 	-CALLBACK => sub {
 	  my ($row) = @_;
+	  # 0 ax.object_xref_id
+	  # 1 ax.rank
+	  # 2 ax.condition_type
+	  # 3 x.dbprimary_acc
+	  # 4 x.display_label
+	  # 5 xe.db_name
+	  # 6 sx.dbprimary_acc
+	  # 7 sx.display_label
+	  # 8 se.db_name
+	  # 9 ax.associated_xref_group_id
 	  my $xref = $oox_xrefs->{ $row->[0] };
 	  # add linkage type to $xref
-	  $xref->{associated_xrefs}->[ $row->[1] ] = {
-											  condition => $row->[2],
-											  target    => {
-												primary_id => $row->[3],
-												display_id => $row->[4],
-												dbname     => $row->[5]
-											  },
-											  source => {
-												primary_id => $row->[6],
-												display_id => $row->[7],
-												dbname     => $row->[8]
-											  } };
+	  $xref->{associated_xrefs}->{ $row->[9] }->{ $row->[2] } =
+		{
+		rank       => $row->[1],
+		primary_id => $row->[3],
+		display_id => $row->[4],
+		dbname     => $row->[5],
+		source     => {
+					primary_id => $row->[6],
+					display_id => $row->[7],
+					dbname     => $row->[8] } };
 
 	  return;
 	} );
 
   # collate everything
   for my $xref ( values %{$oox_xrefs} ) {
+	$xref->{associated_xrefs} = [values %{ $xref->{associated_xrefs} }];
 	push @{ $xrefs->{ $xref->{obj_id} } }, $xref;
 	delete $xref->{obj_id};
   }
