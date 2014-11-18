@@ -42,13 +42,13 @@ sub add_compara {
 	-SQL =>
 	  q/select hg.stable_id,gm.stable_id,g.name,h.description 
 	from (select homology_id,stable_id from homology_member 
-	join gene_member using (gene_member_id) 
-	join genome_db using (genome_db_id) where name=?) hg 
+	join member using (member_id) 
+	join genome_db using (genome_db_id) where name=? and source_name='ENSEMBLGENE') hg 
 	join homology h on (h.homology_id=hg.homology_id) 
 	join homology_member hm on (hm.homology_id=h.homology_id) 
-	join gene_member gm using (gene_member_id) 
+	join member gm using (member_id) 
 	join genome_db g using (genome_db_id) 
-	where gm.stable_id<>hg.stable_id/,
+	where gm.stable_id<>hg.stable_id and source_name='ENSEMBLGENE'/,
 	-CALLBACK => sub {
 	  my ($row) = @_;
 	  push @{ $homologues->{ $row->[0] } },
