@@ -58,10 +58,14 @@ sub add_compara {
 	},
 	-PARAMS => [$species] );
   for my $gene ( @{$genes} ) {
-	my $homo = $homologues->{ $gene->{id} };
-	if ( defined $homo ) {
+      if(!defined $gene->{id}) {
+          print "No ID!\n";
+          die;
+      }
+      my $homo = $homologues->{ $gene->{id} };
+      if ( defined $homo ) {
 	  $gene->{homologues} = $homo;
-	}
+      }
   }
   return;
 } ## end sub add_compara
@@ -112,6 +116,17 @@ sub get_genes {
   while ( my ( $gene_id, $synonym ) = each %$synonyms ) {
 	$genes->{$gene_id}->{synonyms} = $synonym;
   }
+  # add seq_region synonyms
+  my $seq_region_synonyms = $self->get_seq_region_synonyms( $dba, 'gene', $biotypes );
+  while ( my ( $gene_id, $synonym ) = each %$seq_region_synonyms ) {
+	$genes->{$gene_id}->{seq_region_synonyms} = $synonym;
+  }
+  # add coord_system info
+  my $coord_systems = $self->get_coord_systems($dba, 'gene', $biotypes);
+  while ( my ( $gene_id, $coord_system ) = each %$coord_systems ) {
+	$genes->{$gene_id}->{coord_system} = $coord_system;
+  }
+  
   if ( $load_xrefs == 1 ) {
 	# query for all xrefs, hash by gene ID
 	my $xrefs = $self->get_xrefs( $dba, 'gene', $biotypes );
@@ -132,6 +147,33 @@ sub get_genes {
   }
   return $genes;
 } ## end sub get_genes
+
+sub get_coord_systems {
+  my ( $self, $dba, $type, $biotypes ) = @_;
+  my $biotype_sql = '';
+  if ( defined $biotypes && scalar(@$biotypes) > 0 ) {
+	$biotype_sql = ' and g.biotype in (' .
+	  join( ',', map { "'$_'" } @$biotypes ) . ')';
+  }
+  my $coord_systems = {};
+  $dba->dbc()->sql_helper()->execute_no_return(
+	-SQL => qq/
+	select g.stable_id as id, c.name, c.version
+	from $type g
+	join seq_region s using (seq_region_id)
+	join coord_system c using (coord_system_id)
+	where c.species_id=? $biotype_sql
+	/,
+	-PARAMS   => [ $dba->species_id() ],
+	-CALLBACK => sub {
+	  my ($row) = @_;
+	  $coord_systems->{ $row->[0] } = {name=>$row->[1], version=>$row->[2]};
+	  return;
+	} );
+  return $coord_systems;
+
+} ## end sub get_synonyms
+
 
 sub get_synonyms {
   my ( $self, $dba, $biotypes ) = @_;
@@ -160,6 +202,34 @@ sub get_synonyms {
 
 } ## end sub get_synonyms
 
+sub get_seq_region_synonyms {
+  my ( $self, $dba, $type, $biotypes ) = @_;
+  my $biotype_sql = '';
+  if ( defined $biotypes && scalar(@$biotypes) > 0 ) {
+	$biotype_sql = ' and g.biotype in (' .
+	  join( ',', map { "'$_'" } @$biotypes ) . ')';
+  }
+  my $synonyms = {};
+  $dba->dbc()->sql_helper()->execute_no_return(
+	-SQL => qq/
+	select g.stable_id as id, sr.synonym as synonym, e.db_name as db 
+	from $type g
+	join seq_region_synonym sr using (seq_region_id)
+	join seq_region s using (seq_region_id)
+	join coord_system c using (coord_system_id)
+        left join external_db e using (external_db_id)
+	where c.species_id=? $biotype_sql
+	/,
+	-PARAMS   => [ $dba->species_id() ],
+	-CALLBACK => sub {
+	  my ($row) = @_;
+	  push @{ $synonyms->{ $row->[0] } }, {id=>$row->[1], db=>$row->[2]};
+	  return;
+	} );
+  return $synonyms;
+
+} ## end sub get_synonyms
+
 sub get_transcripts {
   my ( $self, $dba, $biotypes, $level, $load_xrefs ) = @_;
 
@@ -179,6 +249,10 @@ sub get_transcripts {
 	$translations =
 	  $self->get_translations( $dba, $biotypes, $level, $load_xrefs );
   }
+
+  my $seq_region_synonyms = $self->get_seq_region_synonyms( $dba, 'transcript', $biotypes );
+  
+  my $coord_systems = $self->get_coord_systems($dba, 'transcript', $biotypes);
 
   my @transcripts = @{
 	$dba->dbc()->sql_helper()->execute(
@@ -204,6 +278,8 @@ sub get_transcripts {
 		my ($row) = @_;
 		$row->{xrefs}        = $xrefs->{ $row->{id} };
 		$row->{translations} = $translations->{ $row->{id} };
+		$row->{seq_region_synonyms} = $seq_region_synonyms->{ $row->{id} };
+		$row->{coord_system} = $coord_systems->{ $row->{id} };
 		return $row;
 	  } ) };
 
@@ -324,7 +400,7 @@ sub get_xrefs {
   my $ax_sql;
   if ( $type eq 'gene' ) {
 	$sql = qq/
-	select g.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name
+	select g.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name,x.description
 	from gene g
 	join object_xref ox on (g.gene_id=ox.ensembl_id and ox.ensembl_object_type='Gene')
 	join xref x using (xref_id)
@@ -335,7 +411,7 @@ sub get_xrefs {
 	where c.species_id=? and oox.object_xref_id is null $biotype_sql
 	/;
 	$oox_sql = qq/
-	select ox.object_xref_id, g.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name, oox.linkage_type, sx.dbprimary_acc,sx.display_label,se.db_name
+	select ox.object_xref_id, g.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name, x.description,oox.linkage_type, sx.dbprimary_acc,sx.display_label,sx.description,se.db_name
 	from gene g
 	join object_xref ox on (g.gene_id=ox.ensembl_id and ox.ensembl_object_type='Gene')
 	join xref x using (xref_id)
@@ -348,7 +424,7 @@ sub get_xrefs {
 	where c.species_id=? $biotype_sql
 	/;
 	$ax_sql = qq/
-	select ax.object_xref_id,ax.rank,ax.condition_type,x.dbprimary_acc,x.display_label,xe.db_name,sx.dbprimary_acc,sx.display_label,se.db_name, ax.associated_group_id 
+	select ax.object_xref_id,ax.rank,ax.condition_type,x.dbprimary_acc,x.display_label,xe.db_name,x.description,sx.dbprimary_acc,sx.display_label,se.db_name, sx.description, ax.associated_group_id 
 	from gene g
 	join object_xref ox on (g.gene_id=ox.ensembl_id and ox.ensembl_object_type='Gene')
 	join associated_xref ax using (object_xref_id) 
@@ -363,7 +439,7 @@ sub get_xrefs {
   } ## end if ( $type eq 'gene' )
   elsif ( $type eq 'transcript' ) {
 	$sql = qq/
-	select g.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name
+	select g.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name, x.description
 	from transcript g
 	join object_xref ox on (g.transcript_id=ox.ensembl_id and ox.ensembl_object_type='Transcript')
 	join xref x using (xref_id)
@@ -374,7 +450,7 @@ sub get_xrefs {
 	where c.species_id=? and oox.object_xref_id is null $biotype_sql
 	/;
 	$oox_sql = qq/
-	select ox.object_xref_id, g.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name, oox.linkage_type, sx.dbprimary_acc,sx.display_label,se.db_name
+	select ox.object_xref_id, g.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name, x.description, oox.linkage_type, sx.dbprimary_acc,sx.display_label,se.db_name,sx.description
 	from transcript g
 	join object_xref ox on (g.transcript_id=ox.ensembl_id and ox.ensembl_object_type='Transcript')
 	join xref x using (xref_id)
@@ -387,7 +463,7 @@ sub get_xrefs {
 	where c.species_id=? $biotype_sql
 	/;
 	$ax_sql = qq/
-	select ax.object_xref_id,ax.rank,ax.condition_type,x.dbprimary_acc,x.display_label,xe.db_name,sx.dbprimary_acc,sx.display_label,se.db_name, ax.associated_group_id 
+	select ax.object_xref_id,ax.rank,ax.condition_type,x.dbprimary_acc,x.display_label,xe.db_name,x.description,sx.dbprimary_acc,sx.display_label,se.db_name,sx.description, ax.associated_group_id 
 	from transcript g
 	join object_xref ox on (g.gene_id=ox.ensembl_id and ox.ensembl_object_type='Transcript')
 	join associated_xref ax using (object_xref_id) 
@@ -402,7 +478,7 @@ sub get_xrefs {
   } ## end elsif ( $type eq 'transcript') [ if ( $type eq 'gene' )]
   elsif ( $type eq 'translation' ) {
 	$sql = qq/
-	select tl.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name
+	select tl.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name, x.description
 	from transcript g
 	join translation tl using (transcript_id)
 	join object_xref ox on (tl.translation_id=ox.ensembl_id and ox.ensembl_object_type='Translation')
@@ -414,7 +490,7 @@ sub get_xrefs {
 	where c.species_id=? and oox.object_xref_id is null $biotype_sql
 	/;
 	$oox_sql = qq/
-	select ox.object_xref_id, tl.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name, oox.linkage_type, sx.dbprimary_acc,sx.display_label,se.db_name
+	select ox.object_xref_id, tl.stable_id as id, x.dbprimary_acc, x.display_label, e.db_name, x.description, oox.linkage_type, sx.dbprimary_acc,sx.display_label,se.db_name,sx.description
 	from transcript g
 	join translation tl using (transcript_id)
 	join object_xref ox on (tl.translation_id=ox.ensembl_id and ox.ensembl_object_type='Translation')
@@ -428,7 +504,7 @@ sub get_xrefs {
 	where c.species_id=? $biotype_sql
 	/;
 	$ax_sql = qq/
-	select ax.object_xref_id,ax.rank,ax.condition_type,x.dbprimary_acc,x.display_label,xe.db_name,sx.dbprimary_acc,sx.display_label,se.db_name, ax.associated_group_id
+	select ax.object_xref_id,ax.rank,ax.condition_type,x.dbprimary_acc,x.display_label,xe.db_name,x.description,sx.dbprimary_acc,sx.display_label,se.db_name, sx.description,ax.associated_group_id
 	from transcript g
 	join translation tl using (transcript_id)
 	join object_xref ox on (tl.translation_id=ox.ensembl_id and ox.ensembl_object_type='Translation')
@@ -451,7 +527,9 @@ sub get_xrefs {
 	  push @{ $xrefs->{ $row->[0] } },
 		{ primary_id => $row->[1],
 		  display_id => $row->[2],
-		  dbname     => $row->[3] };
+		  dbname     => $row->[3],
+                  description=> $row->[4]
+                };
 	  return;
 	} );
   # now handle oox
@@ -464,18 +542,22 @@ sub get_xrefs {
 	  my $xref = $oox_xrefs->{ $row->[0] };
 	  if ( !defined $xref ) {
 		$xref = { obj_id     => $row->[1],
-				  primary_id => $row->[2],
-				  display_id => $row->[3],
-				  dbname     => $row->[4] };
+				  primary_id  => $row->[2],
+				  display_id  => $row->[3],
+				  dbname      => $row->[4],
+				  description => $row->[5],
+                };
 		$oox_xrefs->{ $row->[0] } = $xref;
 	  }
 	  # add linkage type to $xref
 	  push @{ $xref->{linkage_types} },
-		{ evidence => $row->[5],
+		{ evidence => $row->[6],
 		  source   => {
-					  primary_id => $row->[6],
-					  display_id => $row->[7],
-					  dbname     => $row->[8] } };
+					  primary_id  => $row->[7],
+					  display_id  => $row->[8],
+					  dbname      => $row->[9],
+					  description => $row->[10],
+                  } };
 	  return;
 	} );
 
@@ -497,16 +579,19 @@ sub get_xrefs {
 	  # 9 ax.associated_xref_group_id
 	  my $xref = $oox_xrefs->{ $row->[0] };
 	  # add linkage type to $xref
-	  $xref->{associated_xrefs}->{ $row->[9] }->{ $row->[2] } =
+	  $xref->{associated_xrefs}->{ $row->[11] }->{ $row->[2] } =
 		{
 		rank       => $row->[1],
 		primary_id => $row->[3],
 		display_id => $row->[4],
 		dbname     => $row->[5],
+                description=> $row->[6],
 		source     => {
-					primary_id => $row->[6],
-					display_id => $row->[7],
-					dbname     => $row->[8] } };
+					primary_id => $row->[7],
+					display_id => $row->[8],
+					dbname     => $row->[9],
+					description     => $row->[10],
+                } };
 
 	  return;
 	} );
