@@ -1,9 +1,29 @@
+[%#
+Copyright [1999-2014] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+%]
+
 <!DOCTYPE html>
 [% USE date %]
 [% SET psg = 'psgix.assets' %]
 
 <html lang="en">
 <head>
+        <script src="/static/js/20-prettify.js"></script>
+        <script src="/static/js/30-jquery-1.11.1.min.js"></script>
+	<script src="/static/js/highlight/highlight.pack.js"></script>
+
 	<meta charset="utf-8"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	<title>Ensembl Rest API - [% template_title %]</title>
@@ -12,6 +32,7 @@
 	[% ELSE %]
 	<link href="/static/css/10-bootstrap.css" rel="stylesheet"/>
 	<link href="/static/css/20-prettify.css" rel="stylesheet"/>
+       	<link href="/static/css/25-default.css" rel="stylesheet"/>
 	<link href="/static/css/50-additional.css" rel="stylesheet"/>
 	<link href="/static/css/51-docs.css" rel="stylesheet"/>
 	[% END %]
@@ -27,39 +48,31 @@
   <![endif]-->
 </head>
 <body data-spy="scroll" data-target=".bs-docs-sidebar" onload="prettyPrint()">
-<div class="container">		
+<div class="container">
     <div class="navbar navbar-inverse navbar-fixed-top">
         <div class="navbar-inner">
             <div class="container">
-                <a class="brand" href="[% service_parent_url %]"><img class="brand" src="[% service_logo %]" /></a>
+                <a class="brand" href="[% service_parent_url %]"><img class="brand" src="[% service_logo %]" alt="Service logo"/></a>
                     <ul class="nav">
                         <li class="active"><a href="/">Endpoints</a></li>
-                        <li><a href="/documentation/user_guide">User Guide</a></li>
-                        <li><a href="/documentation/change_log">Change Log</a></li>
-                        <li><a href="http://www.ensemblgenomes.org/">About Ensembl Genomes</a></li>
-                    <!--<li><a href="http://www.ensembl.org/info/about/contact/">Contact Ensembl</a></li>-->
+                        <li><a href="http://github.com/Ensembl/ensembl-rest/wiki">User Guide</a></li>
+                        <li><a href="http://github.com/Ensembl/ensembl-rest/wiki/Change-log">Change Log</a></li>
+                        <li><a href="http://www.ensemblgenomes.org">About the Ensembl Genomes Project</a></li>
                     </ul>
-            </div><!-- container--> 
-        </div><!-- navbar-inner--> 
-    </div><!-- navbar--> 
+            </div><!-- container-->
+        </div><!-- navbar-inner-->
+    </div><!-- navbar-->
     <br>
-
-[% IF c.request.env.HTTP_HOST == 'beta.rest.ensemblgenomes.org' %]
-<div class="alert alert-error">
-    <h4>This server is no longer supported and will be retired. Please use <a href="http://rest.ensemblgenomes.org">http://rest.ensemblgenomes.org</a> instead.
-    </h4>
-</div>
-[% END %]
 
     <span class="message">[% status_msg %]</span>
     <span class="error">[% error_msg %]</span>
     [% content %]
-</div><!-- container--> 
+</div><!-- container-->
 
 <footer class="footer">
 	<div class="container">
 		<p class="pull-right"><a href="#">Back to top</a></p>
-		<p>[% service_name %] (Version [% service_version %]) &copy; [% date.format(date.now, ' %b %Y', 'en_GB') %] <a href='http://www.ebi.ac.uk'>EBI</a></p>
+		<p>[% service_name %] (Version [% service_version %]) &copy; [% date.format(date.now, ' %b %Y', 'en_GB') %] [% copyright_footer %]</p>
 	</div>
 </footer>
 
@@ -68,7 +81,7 @@
 <script src='[% c.request.env.$psg.1 %]'></script>
 [% ELSE %]
 <script src="/static/js/10-bootstrap.js"></script>
-<script src="/static/js/20-prettify.js"></script>
+
 [% END %]
 
 
