@@ -1,4 +1,5 @@
 #!/usr/local/bin/perl
+
 use strict;
 use warnings;
 use Daemon::Control;
@@ -25,3 +26,4 @@ Daemon::Control->new(
     pid_file     => $pid_file,
   }
 )->run;
+
