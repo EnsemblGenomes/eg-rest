@@ -52,9 +52,7 @@ warn "\n[EnsEMBL::REST::PreloadRegistry] Registering dbs...\n";
 Bio::EnsEMBL::LookUp::LocalLookUp->register_all_dbs(
   $reg->{host}, 
   $reg->{port}, 
-  $reg->{user}, 
-  '', # no password
-  '_core_[0-9]+_81_[0-9]+'
+  $reg->{user},
 );
 
 warn "[EnsEMBL::REST::PreloadRegistry] Done\n";
