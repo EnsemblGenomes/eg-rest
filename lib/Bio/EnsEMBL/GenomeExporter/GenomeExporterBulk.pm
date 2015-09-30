@@ -28,9 +28,10 @@ use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 sub new {
   my ( $class, @args ) = @_;
   my $self = bless( {}, ref($class) || $class );
-  ( $self->{biotypes}, $self->{level}, $self->{load_xrefs} ) =
-	rearrange( [ 'BIOTYPES', 'LEVEL', 'LOAD_XREFS' ], @args );
+  ( $self->{biotypes}, $self->{level}, $self->{load_xrefs}, $self->{load_exons} ) =
+	rearrange( [ 'BIOTYPES', 'LEVEL', 'LOAD_XREFS', 'LOAD_EXONS' ], @args );
   $self->{load_xrefs} ||= 0;
+  $self->{load_exons} ||= 0;
   $self->{level}      ||= 'gene';
   return $self;
 }
@@ -71,7 +72,7 @@ sub add_compara {
 } ## end sub add_compara
 
 sub export_genes {
-  my ( $self, $dba, $biotypes, $level, $load_xrefs ) = @_;
+  my ( $self, $dba, $biotypes, $level, $load_xrefs, $load_exons ) = @_;
 
   if ( !defined $biotypes ) {
 	$biotypes = $self->{biotypes};
@@ -80,16 +81,22 @@ sub export_genes {
   if ( !defined $level ) {
 	$level = $self->{level};
   }
+  
   if ( !defined $load_xrefs ) {
 	$load_xrefs = $self->{load_xrefs};
   }
+  
+  if ( !defined $load_exons ) {
+	$load_exons = $self->{load_exons};
+  }
+  
   # query for all genes, hash by ID
-  my $genes = $self->get_genes( $dba, $biotypes, $level, $load_xrefs );
+  my $genes = $self->get_genes( $dba, $biotypes, $level, $load_xrefs, $load_exons );
   return [ values %$genes ];
 }
 
 sub get_genes {
-  my ( $self, $dba, $biotypes, $level, $load_xrefs ) = @_;
+  my ( $self, $dba, $biotypes, $level, $load_xrefs, $load_exons ) = @_;
   my $biotype_sql = '';
   if ( defined $biotypes && scalar(@$biotypes) > 0 ) {
 	$biotype_sql = ' and g.biotype in (' .
@@ -140,7 +147,7 @@ sub get_genes {
   {
 	# query for transcripts, hash by gene ID
 	my $transcripts =
-	  $self->get_transcripts( $dba, $biotypes, $level, $load_xrefs );
+	  $self->get_transcripts( $dba, $biotypes, $level, $load_xrefs, $load_exons );
 	while ( my ( $gene_id, $transcript ) = each %$transcripts ) {
 	  $genes->{$gene_id}->{transcripts} = $transcript;
 	}
@@ -231,7 +238,7 @@ sub get_seq_region_synonyms {
 } ## end sub get_synonyms
 
 sub get_transcripts {
-  my ( $self, $dba, $biotypes, $level, $load_xrefs ) = @_;
+  my ( $self, $dba, $biotypes, $level, $load_xrefs, $load_exons ) = @_;
 
   my $biotype_sql = '';
   if ( defined $biotypes && scalar(@$biotypes) > 0 ) {
@@ -247,7 +254,12 @@ sub get_transcripts {
   my $translations = {};
   if ( $level eq 'translation' || $level eq 'protein_feature' ) {
 	$translations =
-	  $self->get_translations( $dba, $biotypes, $level, $load_xrefs );
+	  $self->get_translations( $dba, $biotypes, $level, $load_xrefs, $load_exons );
+  }
+  
+  my $exons = {};
+  if($load_exons == 1) {
+  	$exons = $self->get_exons( $dba );
   }
 
   my $seq_region_synonyms = $self->get_seq_region_synonyms( $dba, 'transcript', $biotypes );
@@ -278,6 +290,7 @@ sub get_transcripts {
 		my ($row) = @_;
 		$row->{xrefs}        = $xrefs->{ $row->{id} };
 		$row->{translations} = $translations->{ $row->{id} };
+		$row->{exons} = $exons->{ $row->{id} };
 		$row->{seq_region_synonyms} = $seq_region_synonyms->{ $row->{id} };
 		$row->{coord_system} = $coord_systems->{ $row->{id} };
 		return $row;
@@ -294,7 +307,7 @@ sub get_transcripts {
 } ## end sub get_transcripts
 
 sub get_translations {
-  my ( $self, $dba, $biotypes, $level, $load_xrefs ) = @_;
+  my ( $self, $dba, $biotypes, $level, $load_xrefs, $load_exons ) = @_;
 
   my $biotype_sql = '';
   if ( defined $biotypes && scalar(@$biotypes) > 0 ) {
@@ -311,10 +324,26 @@ sub get_translations {
   if ( $level eq 'protein_feature' ) {
 	$protein_features = $self->get_protein_features( $dba, $biotypes );
   }
-
-  my @translations = @{
-	$dba->dbc()->sql_helper()->execute(
-	  -SQL => qq/
+  
+  my $sql;
+  if($load_exons == 1) {
+  	$sql = qq/
+  	select t.stable_id as transcript_id,
+  	tl.stable_id as id,
+  	se.stable_id as start_exon,
+  	ee.stable_id as end_exon,
+	tl.seq_start as coding_start,
+	tl.seq_end as coding_end
+  	from transcript t
+  	join translation tl using (transcript_id)
+  	join exon ee on (tl.end_exon_id=ee.exon_id)
+  	join exon se on (tl.start_exon_id=se.exon_id)
+  	join seq_region s on (t.seq_region_id=s.seq_region_id)
+  	join coord_system c using (coord_system_id)
+  	where c.species_id=? $biotype_sql
+  	/; 
+  } else {
+  	$sql = qq/
   	select t.stable_id as transcript_id,
   	tl.stable_id as id
   	from transcript t
@@ -322,7 +351,12 @@ sub get_translations {
   	join seq_region s using (seq_region_id)
   	join coord_system c using (coord_system_id)
   	where c.species_id=? $biotype_sql
-  	/,
+  	/;
+  }
+
+  my @translations = @{
+	$dba->dbc()->sql_helper()->execute(
+	  -SQL => $sql,
 	  -PARAMS       => [ $dba->species_id() ],
 	  -USE_HASHREFS => 1,
 	  -CALLBACK     => sub {
@@ -385,6 +419,42 @@ sub get_protein_features {
   return $protein_features;
 
 } ## end sub get_protein_features
+
+sub get_exons {
+  my ( $self, $dba, $biotypes ) = @_;
+  my $biotype_sql = '';
+  if ( defined $biotypes && scalar(@$biotypes) > 0 ) {
+	$biotype_sql = ' and t.biotype in (' .
+	  join( ',', map { "'$_'" } @$biotypes ) . ')';
+  }
+	my @exons =  @{
+	$dba->dbc()->sql_helper()->execute(
+	  -SQL => qq/
+	    	select
+  	t.stable_id as transcript_id,
+  	et.rank as rank,
+  	e.stable_id as id,
+	e.seq_region_start as start, e.seq_region_end as end, e.seq_region_strand as strand,
+	s.name as seq_region_name
+  	from transcript t
+  	join exon_transcript et using (transcript_id)
+  	join exon e using (exon_id)
+  	join seq_region s on (e.seq_region_id=s.seq_region_id)
+  	join coord_system c using (coord_system_id)
+  	where c.species_id=? $biotype_sql
+	/,
+	  -PARAMS       => [ $dba->species_id() ],
+	  -USE_HASHREFS => 1 ) };
+  my $exons = {};
+  for my $exon (@exons) {
+	push @{ $exons->{ $exon->{transcript_id} } },
+	  $exon;
+  }
+
+  return $exons;
+
+} ## end sub get_exons
+
 
 sub get_xrefs {
   my ( $self, $dba, $type, $biotypes ) = @_;
