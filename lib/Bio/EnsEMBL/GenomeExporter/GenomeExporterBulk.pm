@@ -268,7 +268,7 @@ sub get_transcripts {
 
 	my $xrefs = {};
 	if ( $load_xrefs == 1 ) {
-		$self->get_xrefs( $dba, 'transcript', $biotypes );
+		$xrefs = $self->get_xrefs( $dba, 'transcript', $biotypes );
 	}
 
 	my $translations = {};
