@@ -258,6 +258,7 @@ sub get_seq_region_synonyms {
 } ## end sub get_synonyms
 
 sub get_transcripts {
+
 	my ( $self, $dba, $biotypes, $level, $load_xrefs, $load_exons ) = @_;
 
 	my $biotype_sql = '';
