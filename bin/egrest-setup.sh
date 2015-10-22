@@ -63,8 +63,6 @@ cp -v ensembl_rest.* ../ensembl-rest
 cp -rv root/static ../ensembl-rest/root
 
 ## Remove some some endpoints we dont want
-rm -v ../ensembl-rest/root/documentation/vep.conf
-rm -v ../ensembl-rest/root/documentation/compara.conf
 rm -v ../ensembl-rest/root/documentation/overlap.conf
 rm -v ../ensembl-rest/root/documentation/regulatory.conf
 rm -v ../ensembl-rest/root/documentation/taxonomy.conf
@@ -72,4 +70,7 @@ rm -v ../ensembl-rest/root/documentation/variation.conf
 rm -v ../ensembl-rest/root/documentation/gavariant.conf
 rm -v ../ensembl-rest/root/documentation/gavariantset.conf
 rm -v ../ensembl-rest/root/documentation/gacallset.conf
+
+## ENSEMBL-4134 - fix 'other features' example
+sed -i -e 's/species=__VAR(species_common)__/species=__VAR(other_features_species)__/g' ensembl-rest/root/documentation/sequence.conf
 
