@@ -34,7 +34,6 @@ done
 ## Check out *Ensembl Genomes* code (API, web and (web) tools) from GitHub:
 for repo in \
     ensemblgenomes-api \
-    eg-rest;
 do
     if [ ! -d "$repo" ]; then
         echo "Checking out $repo (branch ${EG_BRANCH})"
