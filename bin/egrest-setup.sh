@@ -62,6 +62,7 @@ cp -rv eg-rest/root/static ensembl-rest/root
 ## Remove Ensembl versions of endpoints we fully override
 rm -v ensembl-rest/root/documentation/overlap.conf
 rm -v ensembl-rest/root/documentation/compara.conf
+rm -v ensembl-rest/root/documentation/vep.conf
 
 ## Remove some endpoints we dont want
 rm -v ensembl-rest/root/documentation/regulatory.conf
