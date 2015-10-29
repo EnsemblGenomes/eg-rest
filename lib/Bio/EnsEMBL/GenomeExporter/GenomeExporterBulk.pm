@@ -579,7 +579,10 @@ sub get_xrefs {
 	  # 9 ax.associated_xref_group_id
 	  my $xref = $oox_xrefs->{ $row->[0] };
 	  # add linkage type to $xref
-	  $xref->{associated_xrefs}->{ $row->[11] }->{ $row->[2] } =
+	  my $ass_name = $row->[11];
+	  # ensure names are safe
+	  $ass_name =~ s/[^A-Za-z0-9]+/_/g;
+	  $xref->{associated_xrefs}->{ $ass_name }->{ $row->[2] } =
 		{
 		rank       => $row->[1],
 		primary_id => $row->[3],
