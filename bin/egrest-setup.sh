@@ -34,7 +34,6 @@ done
 ## Check out *Ensembl Genomes* code (API, web and (web) tools) from GitHub:
 for repo in \
     ensemblgenomes-api \
-    eg-rest;
 do
     if [ ! -d "$repo" ]; then
         echo "Checking out $repo (branch ${EG_BRANCH})"
@@ -55,21 +54,21 @@ done
 ## Dir for starman logs and pid file
 mkdir logs
 
-## Finally, checkout EBI specific web-server and db-server configuration from our internal EG Git server...
-cd eg-rest
-
 ## EG Configuration
-cp -v ensembl_rest.* ../ensembl-rest
-cp -rv root/static ../ensembl-rest/root
+cp -v eg-rest/ensembl_rest.* ensembl-rest
+cp -rv eg-rest/root/static ensembl-rest/root
 
-## Remove some some endpoints we dont want
-rm -v ../ensembl-rest/root/documentation/vep.conf
-rm -v ../ensembl-rest/root/documentation/compara.conf
-rm -v ../ensembl-rest/root/documentation/overlap.conf
-rm -v ../ensembl-rest/root/documentation/regulatory.conf
-rm -v ../ensembl-rest/root/documentation/taxonomy.conf
-rm -v ../ensembl-rest/root/documentation/variation.conf
-rm -v ../ensembl-rest/root/documentation/gavariant.conf
-rm -v ../ensembl-rest/root/documentation/gavariantset.conf
-rm -v ../ensembl-rest/root/documentation/gacallset.conf
+## Remove Ensembl versions of endpoints we fully override
+rm -v ensembl-rest/root/documentation/overlap.conf
+rm -v ensembl-rest/root/documentation/compara.conf
+rm -v ensembl-rest/root/documentation/vep.conf
+
+## Remove some endpoints we dont want
+rm -v ensembl-rest/root/documentation/regulatory.conf
+rm -v ensembl-rest/root/documentation/gavariant.conf
+rm -v ensembl-rest/root/documentation/gavariantset.conf
+rm -v ensembl-rest/root/documentation/gacallset.conf
+
+## ENSEMBL-4134 - fix 'other features' example
+sed -i -e 's/species=__VAR(species_common)__/species=__VAR(other_features_species)__/g' ensembl-rest/root/documentation/sequence.conf
 
