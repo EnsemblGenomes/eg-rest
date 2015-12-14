@@ -30,7 +30,7 @@ package EnsEMBL::REST::PreloadRegistry;
 
 use strict;
 use Config::General qw(ParseConfig);
-use Bio::EnsEMBL::LookUp::LocalLookUp;
+use Bio::EnsEMBL::Registry;
 
 my $root = $ENV{ENSEMBL_REST_SERVER_ROOT};
 
@@ -49,10 +49,10 @@ my $reg    = $config{'Model::Registry'};
 
 warn "\n[EnsEMBL::REST::PreloadRegistry] Registering dbs...\n";
 
-Bio::EnsEMBL::LookUp::LocalLookUp->register_all_dbs(
-  $reg->{host}, 
-  $reg->{port}, 
-  $reg->{user},
+Bio::EnsEMBL::Registry->load_registry_from_db(
+  -host => $reg->{host},
+  -user => $reg->{user},
+  -port => $reg->{port}
 );
 
 warn "[EnsEMBL::REST::PreloadRegistry] Done\n";

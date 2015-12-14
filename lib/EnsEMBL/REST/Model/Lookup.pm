@@ -47,16 +47,17 @@ sub find_genetree_by_stable_id {
   #Force search to use compara as the DB type
   $c->request->parameters->{db_type} = 'compara' if ! $c->request->parameters->{db_type};
 
-  #Try to do a lookup if the ID DB is there
-  my $lookup = $reg->get_DBAdaptor('multi', 'stable_ids', 1);
-  if($lookup) {
-    my ($species, $object_type, $db_type) = $self->find_object_location($id);
-    if($species) {
-      my $gta = $reg->get_adaptor($species, $db_type, $object_type);
-      Catalyst::Exception->throw("No adaptor found for ID $id, species $species, object $object_type and db $db_type") unless $gta;
-      $gt = $gta->fetch_by_stable_id($id);
-    }
-  }
+  ## !! stable ID table does not contain genetrees !!
+  # #Try to do a lookup if the ID DB is there
+  # my $lookup = $reg->get_DBAdaptor('multi', 'stable_ids', 1);
+  # if(0&&$lookup) {
+  #   my ($species, $object_type, $db_type) = $self->find_object_location($id);
+  #   if($species) {
+  #     my $gta = $reg->get_adaptor($species, $db_type, $object_type);
+  #     Catalyst::Exception->throw("No adaptor found for ID $id, species $species, object $object_type and db $db_type") unless $gta;
+  #     $gt = $gta->fetch_by_stable_id($id);
+  #   }
+  # }
 
   #If we haven't got one then do a linear search
   if(! $gt) {
