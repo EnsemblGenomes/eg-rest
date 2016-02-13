@@ -24,7 +24,12 @@ use strict;
 package Bio::EnsEMBL::GenomeExporter::GenomeExporterBulk;
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
+use List::MoreUtils qw(natatime);
 use Data::Dumper;
+use Log::Log4perl qw(get_logger);
+
+my $log = get_logger();
+
 sub new {
 	my ( $class, @args ) = @_;
 	my $self = bless( {}, ref($class) || $class );
@@ -76,6 +81,65 @@ sub add_compara {
 	}
 	return;
 } ## end sub add_compara
+
+my $variation_sql = q/
+select tv.feature_stable_id as id, vf.variation_name,s.name as source,sr.name as seq_region_name,
+vf.seq_region_start,vf.seq_region_end,vf.seq_region_strand, tv.allele_string, 
+tv.sift_prediction, tv.polyphen_prediction, vf.clinical_significance, tv.consequence_types 
+from transcript_variation tv 
+join variation_feature vf using (variation_feature_id) 
+join seq_region sr using (seq_region_id) 
+join source s using (source_id) 
+where tv.feature_stable_id in 
+/;
+
+my $block = 25;
+
+sub add_variation {
+    my ($self, $genes, $variation_dba) = @_;
+    my $variation_helper = $variation_dba->dbc()->sql_helper();
+    # hash transcripts by names
+    my $transcripts = {};
+    for my $gene (@$genes) {
+	for my $transcript (@{$gene->{transcripts}}) {
+	    $transcripts->{$transcript->{id}} = $transcript;
+	}
+    }
+    # iterate over blocks of names using natatime
+    my $it = natatime($block, keys %$transcripts);
+    my $total = 0;
+    my $transT = 0;
+    $log->info("Found ".scalar(keys %$transcripts)." transcripts");
+    while (my @ids = $it->()) {
+	# bulk query by ID
+	$transT += scalar(@ids);
+	$log->info("Processing $transT");
+	my $sql = $variation_sql . '('. join (',',map {"'$_'"} @ids) .')';
+	my $n = 0;
+	$variation_helper->execute_no_return(
+	    -SQL=>$sql,
+	    -USE_HASHREFS => 1,
+	    -CALLBACK     => sub {
+		my $row = shift @_;
+		my $id = $row->{id};
+		delete $row->{id};
+		if(defined $row->{clinical_significance}) {
+		    $row->{clinical_significance} = [split ',',$row->{clinical_significance}];
+		}
+		if(defined $row->{consequence_types}) {
+		    $row->{consequence_types} = [split ',',$row->{consequence_types}];
+		}
+		# attach to transcripts
+		push @{$transcripts->{$id}->{variants}}, $row;
+		$n++;
+		$total++;
+		return;
+	    }
+	    );
+	$log->info("Processed $n variants (total $total)");
+    }
+    return;
+}
 
 sub export_genes {
 	my ( $self, $dba, $biotypes, $level, $load_xrefs, $load_exons ) = @_;
