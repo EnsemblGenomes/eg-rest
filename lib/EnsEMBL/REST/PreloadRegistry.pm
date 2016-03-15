@@ -49,11 +49,13 @@ my $reg    = $config{'Model::Registry'};
 
 warn "\n[EnsEMBL::REST::PreloadRegistry] Registering dbs...\n";
 
-Bio::EnsEMBL::Registry->load_registry_from_db(
-  -host => $reg->{host},
-  -user => $reg->{user},
-  -port => $reg->{port}
-);
+my @db_servers;
+
+push @db_servers, {-host => $reg->{host}, -user => $reg->{user}, -port => $reg->{port}} if ($reg->{host} && $reg->{user} && $reg->{port});
+push @db_servers, {-host => $reg->{bacteria_host}, -user => $reg->{bacteria_user}, -port => $reg->{bacteria_port}} if ($reg->{bacteria_host} && $reg->{bacteria_user} && $reg->{bacteria_port});
+
+Bio::EnsEMBL::Registry->load_registry_from_multiple_dbs(@db_servers);
+
 
 warn "[EnsEMBL::REST::PreloadRegistry] Done\n";
 
