@@ -1,6 +1,6 @@
 =head1 LICENSE
 
-Copyright [1999-2015] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
+Copyright [1999-2016] Wellcome Trust Sanger Institute and the EMBL-European Bioinformatics Institute
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ use Moose;
 use namespace::autoclean;
 use Try::Tiny;
 use Catalyst::Exception;
+use Scalar::Util qw/weaken/;
 
 extends 'Catalyst::Model';
 with 'Catalyst::Component::InstancePerContext';
@@ -30,10 +31,11 @@ with 'Catalyst::Component::InstancePerContext';
 has 'lookup_model' => ( is => 'ro', isa => 'Str', required => 1, default => 'DatabaseIDLookup' );
 
 # Per instance variables
-has 'context' => (is => 'ro');
+has 'context' => (is => 'ro', weak_ref => 1);
 
 sub build_per_context_instance {
   my ($self, $c, @args) = @_;
+  weaken($c);
   return $self->new({ context => $c, %$self, @args });
 }
 
@@ -47,16 +49,17 @@ sub find_genetree_by_stable_id {
   #Force search to use compara as the DB type
   $c->request->parameters->{db_type} = 'compara' if ! $c->request->parameters->{db_type};
 
-  #Try to do a lookup if the ID DB is there
-  my $lookup = $reg->get_DBAdaptor('multi', 'stable_ids', 1);
-  if($lookup) {
-    my ($species, $object_type, $db_type) = $self->find_object_location($id);
-    if($species) {
-      my $gta = $reg->get_adaptor($species, $db_type, $object_type);
-      Catalyst::Exception->throw("No adaptor found for ID $id, species $species, object $object_type and db $db_type") unless $gta;
-      $gt = $gta->fetch_by_stable_id($id);
-    }
-  }
+  ## !! stable ID table does not contain genetrees !!
+  # #Try to do a lookup if the ID DB is there
+  # my $lookup = $reg->get_DBAdaptor('multi', 'stable_ids', 1);
+  # if(0&&$lookup) {
+  #   my ($species, $object_type, $db_type) = $self->find_object_location($id);
+  #   if($species) {
+  #     my $gta = $reg->get_adaptor($species, $db_type, $object_type);
+  #     Catalyst::Exception->throw("No adaptor found for ID $id, species $species, object $object_type and db $db_type") unless $gta;
+  #     $gt = $gta->fetch_by_stable_id($id);
+  #   }
+  # }
 
   #If we haven't got one then do a linear search
   if(! $gt) {
@@ -130,9 +133,8 @@ sub find_compara_species_sets {
   foreach my $mlss (@$mlsss) {
     my $species_set = {};
     my $species_set_obj = $mlss->species_set_obj();
-    my @species_set_genomes = map { $_->name } @{$mlss->species_set_obj->genome_dbs};
-    my $tag = $species_set_obj->get_value_for_tag('name');
-    $species_set->{species_set_group} = ($tag) ? $tag : '';
+    my @species_set_genomes = map { $_->name } @{$species_set_obj->genome_dbs};
+    $species_set->{species_set_group} = $species_set_obj->name;
     $species_set->{name} = $mlss->name;
     $species_set->{species_set} = \@species_set_genomes;
     $species_set->{method} = $mlss->method()->type();
@@ -250,10 +252,9 @@ sub find_object_location {
 }
 
 sub fetch_archive_by_id {
-  my ($self, $id) = @_;
+  my ($self, $stable_id) = @_;
 
   my $c = $self->context();
-  my ($stable_id, $version) = split(/\./, $id);
   my $archive;
 
   my @results = $self->find_object_location($stable_id, undef, 1);
@@ -261,13 +262,14 @@ sub fetch_archive_by_id {
     Catalyst::Exception->throw("No object found for $stable_id");
   }
   my $species = $results[0];
+  # We need to accept the type from find_object_location because some
+  # species like C. elegans don't have a pattern the type lookup can
+  # identify, and things go very badly
+  my $type = $results[1] ? $results[1] : undef;
   my $adaptor = $c->model('Registry')->get_adaptor($species,'Core','ArchiveStableID');
 
-  if ($version) {
-    $archive = $adaptor->fetch_by_stable_id_version($stable_id, $version);
-  } else {
-    $archive = $adaptor->fetch_by_stable_id($stable_id);
-  }
+  # Lookup the stable_id, passing along the identifier type if we have it
+  $archive = $adaptor->fetch_by_stable_id($stable_id, $type);
   $c->stash()->{archive} = $archive;
 }
 
@@ -286,14 +288,12 @@ sub find_and_locate_object {
     my $type;
     my $input_type = lc($features->{object_type});
     if ($input_type eq 'gene') {
-      $type = 'Transcript';
+      $features->{'Transcript'} = $self->Transcript($features->{id}, $species, $db_type);
     } elsif ($input_type eq 'transcript') {
-      $type = 'Exon';
-      if ($c->request->param('utr')) { $features->{UTR} = $self->UTR($id, $species, $db_type) ; }
+      $features = $self->transcript_feature($features->{id}, $species, $db_type);
     } else {
-      Catalyst::Exception->throw("Include option only available for Genes and Transcripts");
+      Catalyst::Exception->throw("Expand option only available for Genes and Transcripts");
     }
-    $features->{$type} = $self->$type($features->{id}, $species, $db_type);
   }
 
   return $features;
@@ -358,24 +358,32 @@ sub Transcript {
   my $object = $self->find_object($id, $species, 'Gene', $db_type);
   my $transcripts = $object->get_all_Transcripts;
   foreach my $transcript (@$transcripts) {
-    $features = $self->features_as_hash($transcript->stable_id, $species, 'Transcript', $db_type, $transcript);
-    $features->{Exon} = $self->Exon($features->{id}, $species, $db_type);
-    if ($transcript->translate) {
-      my $translation = $transcript->translation;
-      $features->{Translation} = $self->features_as_hash($translation->stable_id, $species, 'Translation', $db_type, $translation);
-    }
-    push @transcripts, $features;
-    if ($self->context->request->param('utr')) { $features->{UTR} = $self->UTR($transcript->stable_id, $species, $db_type) ; }
+  push @transcripts, $self->transcript_feature($transcript->stable_id, $species, $db_type);
   }
   return \@transcripts;
 }
 
-sub UTR {
+sub transcript_feature {
   my ($self, $id, $species, $db_type) = @_;
+  my $features;
+  my $transcript = $self->find_object($id, $species, 'Transcript', $db_type);
+  $features = $self->features_as_hash($id, $species, 'Transcript', $db_type, $transcript);
+  $features->{Exon} = $self->Exon($transcript, $species, $db_type);
+  if ($transcript->translate) {
+    my $translation = $transcript->translation;
+    $features->{Translation} = $self->features_as_hash($translation->stable_id, $species, 'Translation', $db_type, $translation);
+  }
+  if ($self->context->request->param('utr')) {
+    $features->{UTR} = $self->UTR($transcript, $species, $db_type) ;
+  }
+  return $features;
+}
+
+sub UTR {
+  my ($self, $transcript, $species, $db_type) = @_;
 
   my @utrs;
   my $features;
-  my $transcript = $self->find_object($id, $species, 'Transcript', $db_type);
   my $five_utr = $transcript->get_all_five_prime_UTRs();
   foreach my $five (@$five_utr) {
     push @utrs, $self->features_as_hash($transcript->stable_id, $species, 'five_prime_UTR', $db_type, $five);
@@ -389,11 +397,10 @@ sub UTR {
 }
 
 sub Exon {
-  my ($self, $id, $species, $db_type) = @_;
+  my ($self, $transcript, $species, $db_type) = @_;
 
   my @exons;
-  my $object = $self->find_object($id, $species, 'Transcript', $db_type);
-  my $exons = $object->get_all_Exons;
+  my $exons = $transcript->get_all_Exons;
   foreach my $exon(@$exons) {
     push @exons, $self->features_as_hash($exon->stable_id, $species, 'Exon', $db_type, $exon);
   }
@@ -439,6 +446,8 @@ sub features_as_hash {
       $features->{biotype} = $summary_hash->{biotype} if defined $summary_hash->{biotype};
       $features->{source} = $summary_hash->{source} if defined $summary_hash->{source};
       $features->{logic_name} = $summary_hash->{logic_name} if defined $summary_hash->{logic_name};
+# Parent field to link back to gene/transcript where available
+      $features->{Parent} = $summary_hash->{Parent} if defined $summary_hash->{Parent};
       if (lc($object_type) eq 'transcript') {
         $features->{is_canonical} = $obj->is_canonical;
       }

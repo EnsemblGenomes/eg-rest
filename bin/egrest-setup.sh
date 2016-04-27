@@ -33,7 +33,7 @@ done
 
 ## Check out *Ensembl Genomes* code (API, web and (web) tools) from GitHub:
 for repo in \
-    ensemblgenomes-api \
+    ensemblgenomes-api;
 do
     if [ ! -d "$repo" ]; then
         echo "Checking out $repo (branch ${EG_BRANCH})"
@@ -68,6 +68,7 @@ rm -v ensembl-rest/root/documentation/regulatory.conf
 rm -v ensembl-rest/root/documentation/gavariant.conf
 rm -v ensembl-rest/root/documentation/gavariantset.conf
 rm -v ensembl-rest/root/documentation/gacallset.conf
+rm -v ensembl-rest/root/documentation/archive.conf
 
 ## ENSEMBL-4134 - fix 'other features' example
 sed -i -e 's/species=__VAR(species_common)__/species=__VAR(other_features_species)__/g' ensembl-rest/root/documentation/sequence.conf
