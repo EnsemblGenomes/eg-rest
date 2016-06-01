@@ -1,4 +1,5 @@
-ROOT='/nfs/public/rw/ensembl/ensembl-genomes/current/restapi'
+#ROOT='/nfs/public/rw/ensembl/ensembl-genomes/current/restapi'
+ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/../.."
 PORT=8030
 export ENSEMBL_REST_SERVER_ROOT=$ROOT
 export ENSEMBL_REST_SERVER_PORT=$PORT
