@@ -38,7 +38,7 @@ unless ($root) {
   die "Failed to preload registry: \$ENV{ENSEMBL_REST_SERVER_ROOT} is not defined\n";
 }
 
-my $conf_file = "$root/ensembl-rest/ensembl_rest.conf";
+my $conf_file = "$root/eg-rest/eg_rest.conf";
 
 unless (-f $conf_file) {
   die "Failed to preload registry: cannot find REST server config at $conf_file\n";

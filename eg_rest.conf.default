@@ -269,3 +269,15 @@ jsonp=1
     global = 1
   </backend>
 </Plugin::Cache>
+
+# add EG static root and give it priority
+<Plugin::Static::Simple>
+  include_path = __path_to(root)__/../../eg-rest/root
+  include_path = __path_to(root)__
+</Plugin::Static::Simple>
+
+# add EG HTML template root and give it priority
+<View::HTML>
+  INCLUDE_PATH = __path_to(root)__/../../eg-rest/root
+  INCLUDE_PATH = __path_to(root)__
+</View::HTML>
