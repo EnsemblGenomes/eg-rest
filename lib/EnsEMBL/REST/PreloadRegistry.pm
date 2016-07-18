@@ -32,10 +32,10 @@ use strict;
 use Config::General qw(ParseConfig);
 use Bio::EnsEMBL::Registry;
 
-my $root = $ENV{ENSEMBL_REST_SERVER_ROOT};
+my $root = $ENV{ENSEMBL_REST_ROOT};
 
 unless ($root) {
-  die "Failed to preload registry: \$ENV{ENSEMBL_REST_SERVER_ROOT} is not defined\n";
+  die "Failed to preload registry: \$ENV{ENSEMBL_REST_ROOT} is not defined\n";
 }
 
 my $conf_file = "$root/eg-rest/eg_rest.conf";
