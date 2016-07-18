@@ -16,6 +16,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+=head1 DESCRIPTION
+
+This script checks all endpoints in the REST server to see if they load 
+without error. It doesn't check *which* endpoints are present, or that 
+the endpoints return useful data, only that they don't fail.
+
 =cut
 
 use strict;
