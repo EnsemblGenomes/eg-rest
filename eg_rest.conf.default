@@ -22,9 +22,9 @@ jsonp=1
   lookup_host = mysql-eg-mirror.ebi.ac.uk
   lookup_port = 4157
   lookup_user = ensro
-  lookup_dbname = ensemblgenomes_info_28
+  lookup_dbname = ensemblgenomes_info_32
  
-  version = 81
+  version = 85
   
   # verbose = 0
   
@@ -147,11 +147,12 @@ jsonp=1
 
     assembly_id=GCA_000005845
     division_name=EnsemblPlants
-    family_id=MF_01120
-    family_member_id=STK_01900
-    family_member_symbol=lysK
-    family_compara=bacteria
-    family_member_species=sulfolobus_tokodaii_str_7
+    
+    family_id=PTHR10755
+    family_member_id=TGME49_023020
+    family_member_symbol=HEMF
+    family_compara=protists
+    family_member_species=toxoplasma_gondii
 
     ontology=GO
     ontology_term_id=GO:0005667
