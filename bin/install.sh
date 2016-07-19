@@ -55,7 +55,7 @@ mkdir logs
 ## compile variation code
 (cd ensembl-variation/C_code && make)
 
-## Copy default VB configs
+## Copy default configs
 cp -vi eg-rest/eg_rest.conf.default eg-rest/eg_rest.conf
 cp -vi eg-rest/bin/env.sh.default   eg-rest/bin/env.sh
 
