@@ -21,7 +21,7 @@ builder {
     enable 'StackTrace';
     enable 'Runtime';
     enable "ContentLength";
-    enable 'CrossOrigin', origins => '*';
+    enable 'CrossOrigin', origins => '*', headers => '*', methods => ['GET','POST','OPTIONS'];
     $app;
 }
 
