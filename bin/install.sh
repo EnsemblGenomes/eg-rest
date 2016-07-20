@@ -59,14 +59,7 @@ mkdir logs
 cp -vi eg-rest/eg_rest.conf.default eg-rest/eg_rest.conf
 cp -vi eg-rest/bin/env.sh.default   eg-rest/bin/env.sh
 
-## Remove Ensembl versions of endpoints we fully override
+## Remove Ensembl versions of endpoints we fully override to avoid conflicts
 rm -v ensembl-rest/root/documentation/overlap.conf
 rm -v ensembl-rest/root/documentation/compara.conf
 rm -v ensembl-rest/root/documentation/vep.conf
-
-## Remove some endpoints we dont want
-rm -v ensembl-rest/root/documentation/regulatory.conf
-rm -v ensembl-rest/root/documentation/gavariant.conf
-rm -v ensembl-rest/root/documentation/gavariantset.conf
-rm -v ensembl-rest/root/documentation/gacallset.conf
-rm -v ensembl-rest/root/documentation/archive.conf
