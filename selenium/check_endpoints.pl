@@ -35,7 +35,7 @@ GetOptions(
   'host=s'    => \(my $host    = 'localhost'),
   'port=i'    => \(my $port    = 4444),
   'browser=s' => \(my $browser = 'firefox'),
-  'timeout=i' => \(my $timeout = 10000),
+  'timeout=i' => \(my $timeout = 30000),
 );
 
 my $base_url = $ARGV[0] || die "Please supply a URL to test";
@@ -44,9 +44,10 @@ my $selenium   = Test::WWW::Selenium->new(
   host        => $host,
   port        => $port,
   browser_url => $base_url,
-  _timeout    => $timeout,
   _ua         => LWP::UserAgent->new(keep_alive => 5, env_proxy => 1)
 );
+
+$selenium->set_timeout($timeout);
 
 test_endpoints();
 done_testing();
