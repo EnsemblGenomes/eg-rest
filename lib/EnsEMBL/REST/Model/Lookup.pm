@@ -48,7 +48,7 @@ sub find_genetree_by_stable_id {
 
   #Force search to use compara as the DB type
   $c->request->parameters->{db_type} = 'compara' if ! $c->request->parameters->{db_type};
-
+## EG
   ## !! stable ID table does not contain genetrees !!
   # #Try to do a lookup if the ID DB is there
   # my $lookup = $reg->get_DBAdaptor('multi', 'stable_ids', 1);
@@ -60,7 +60,7 @@ sub find_genetree_by_stable_id {
   #     $gt = $gta->fetch_by_stable_id($id);
   #   }
   # }
-
+##
   #If we haven't got one then do a linear search
   if(! $gt) {
     my $comparas = $c->model('Registry')->get_all_DBAdaptors('compara', $compara_name);
@@ -81,15 +81,35 @@ sub find_genetree_by_member_id {
   my $reg = $c->model('Registry');
 
   my ($species, $object_type, $db_type) = $self->find_object_location($id);
-  Exception::Catalyst->throw("Unable to find given object: $id") unless $species;
+
+  # The rest of the method should treat all the possible $object_type and
+  # $db_type, and output the relevant error messages
+  Catalyst::Exception->throw("Unable to find given object: $id") unless $species;
+  Catalyst::Exception->throw("'$id' is not an Ensembl Core object, and thus does not have a gene-tree.") if $db_type ne 'core';
 
   my $dba = $reg->get_best_compara_DBAdaptor($species,$compara_name);
-  my $ma = $dba->get_GeneMemberAdaptor;
-  my $member = $ma->fetch_by_stable_id($id);
-  Exception->Catalyst->throw("Could not fetch GeneTree Member") unless $member;
+
+  my $member;
+  if ($object_type eq 'Gene') {
+    $member = $dba->get_GeneMemberAdaptor->fetch_by_stable_id($id);
+  } elsif ($object_type eq 'Transcript') {
+    my $gene_adaptor = $reg->get_adaptor($species, $db_type, 'Gene');
+    my $gene = $gene_adaptor->fetch_by_transcript_stable_id($id);
+    $member = $dba->get_GeneMemberAdaptor->fetch_by_stable_id($gene->stable_id);
+  } elsif ($object_type eq 'Translation') {
+    my $translation_adaptor = $reg->get_adaptor($species, $db_type, 'Translation');
+    my $translation = $translation_adaptor->fetch_by_stable_id($id);
+    $member = $dba->get_SeqMemberAdaptor->fetch_by_stable_id($translation->stable_id);
+  } elsif ($object_type eq 'Exon') {
+    my $gene_adaptor = $reg->get_adaptor($species, $db_type, 'Gene');
+    my $gene = $gene_adaptor->fetch_by_exon_stable_id($id);
+    $member = $dba->get_GeneMemberAdaptor->fetch_by_stable_id($gene->stable_id);
+  }
+  Catalyst::Exception->throw("Could not fetch a $object_type object for ID $id") unless $member;
 
   my $gta = $dba->get_GeneTreeAdaptor;
   my $gt = $gta->fetch_default_for_Member($member);
+  Catalyst::Exception->throw("No GeneTree found for $object_type ID $id") unless $gt;
   return $gt;
 }
 
@@ -99,9 +119,7 @@ sub find_compara_methods {
   my ($self, $class) = @_;
   my $c = $self->context();
   #default is "multi"
-## EG temp fix to get compara from config - should be in core for E82, then we can drop this from eg-rest
   my $compara = $c->request->parameters->{compara} || $c->config->{'Controller::Compara'}->{default_compara} || 'multi';
-##
   my $reg = $c->model('Registry');
   my $compara_dba = $reg->get_DBAdaptor($compara, "compara");
   my $methods;
@@ -120,9 +138,7 @@ sub find_compara_species_sets {
 
   my $c = $self->context();
   #default is "multi"
-## EG temp fix to get compara from config - should be in core for E82, then we can drop this from eg-rest 
   my $compara = $c->request->parameters->{compara} || $c->config->{'Controller::Compara'}->{default_compara} || 'multi';
-##
   my $reg = $c->model('Registry');
   my $compara_dba = $reg->get_DBAdaptor($compara, "compara");
 
@@ -358,7 +374,7 @@ sub Transcript {
   my $object = $self->find_object($id, $species, 'Gene', $db_type);
   my $transcripts = $object->get_all_Transcripts;
   foreach my $transcript (@$transcripts) {
-  push @transcripts, $self->transcript_feature($transcript->stable_id, $species, $db_type);
+    push @transcripts, $self->transcript_feature($transcript->stable_id, $species, $db_type);
   }
   return \@transcripts;
 }
