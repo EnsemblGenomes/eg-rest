@@ -17,8 +17,8 @@ jsonp=1
 <Model::Registry>
   ###### Database settings. Use if you want to connect to a single database instance. Common options are given below
   
-  host = mysql-eg-mirror.ebi.ac.uk
-  port = 4157
+  host = mysql-eg-rest-rel.ebi.ac.uk
+  port = 4392
   user = ensro
 
   lookup_host = mysql-eg-mirror.ebi.ac.uk
@@ -112,7 +112,10 @@ jsonp=1
     transcript_symbol_db=GO
     
     prediction_transcript_stable_id=FGENESH00000000001
-    other_features_transcript_stable_id=
+    other_features_transcript_stable_id=LOC_Os12g36040.1
+## EG
+    other_features_species=oryza_sativa
+##
     
     sequence_region_name=1
     sequence_region=1:8001..18000:1
@@ -194,11 +197,6 @@ jsonp=1
     compara_method_type=GenomicAlign
     compara_species_set_1=arabidopsis_thaliana
     compara_species_set_2=vitis_vinifera
-
-    contig_coord_system=contig
-    contig_sequence_region=F5E12_1
-    other_features_species=oryza_sativa
-    other_features_transcript_stable_id=LOC_Os12g36040.1
 ##
 
     accession=U00096
