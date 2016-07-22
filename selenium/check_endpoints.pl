@@ -44,7 +44,7 @@ my $selenium   = Test::WWW::Selenium->new(
   host        => $host,
   port        => $port,
   browser_url => $base_url,
-  _ua         => LWP::UserAgent->new(keep_alive => 5, env_proxy => 1)
+  _ua         => LWP::UserAgent->new(keep_alive => 5, env_proxy => 1, agent => "$0 ")
 );
 
 $selenium->set_timeout($timeout);
@@ -89,7 +89,7 @@ sub page_loads_without_error {
 sub wait_for_ajax {
   # wait until there are no spinners on the page
   return $selenium->wait_for_condition(
-    q|selenium.browserbot.getCurrentWindow().jQuery("img[src$=\'e-loader.gif\']")|, 
+    q|!selenium.browserbot.getCurrentWindow().jQuery("img[src$=\'e-loader.gif\']").length|, 
     $timeout
   ); 
 }
