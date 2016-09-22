@@ -14,8 +14,9 @@ builder {
   my $staticdir = File::Spec->catdir($rootdir, 'root');
     Plack::Util::load_class('BSD::Resource') if $Config{osname} eq 'darwin';
     enable 'SizeLimit' => (
-        max_unshared_size_in_kb => (300 * 1024),    # 100MB per process (memory assigned just to the process)
+        max_unshared_size_in_kb => (1300 * 1024),    # 1300MB per process (memory assigned just to the process)
         check_every_n_requests => 10,
+        log_when_limits_exceeded => 1
     );
     enable "Plack::Middleware::ReverseProxy";
     enable 'StackTrace';
