@@ -57,7 +57,6 @@ limitations under the License.
                     <ul class="nav">
                         <li class="active"><a href="/">Endpoints</a></li>
                         <li><a href="[% wiki_url %]">User Guide</a></li>
-                        <li><a href="http://github.com/Ensembl/ensembl-rest/wiki/Change-log">Change Log</a></li>
                         <li><a href="http://www.ensemblgenomes.org">About the Ensembl Genomes Project</a></li>
                     </ul>
             </div><!-- container-->

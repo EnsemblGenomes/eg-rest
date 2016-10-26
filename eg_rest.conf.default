@@ -9,7 +9,7 @@ site_name = Ensembl Genomes REST API
 service_name = Ensembl Genomes REST API
 service_logo = /static/img/e-ensemblgenomes.png
 service_parent_url = http://www.ensemblgenomes.org
-wiki_url = http://github.com/Ensembl/ensembl-rest/wiki
+wiki_url = http://github.com/EnsemblGenomes/eg-rest/wiki
 copyright_footer = <a href='http://www.sanger.ac.uk'>WTSI</a> &amp; <a href='http://www.ebi.ac.uk'>EBI</a>
 
 jsonp=1
