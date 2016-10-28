@@ -133,6 +133,7 @@ jsonp=1
     taxon_name=Arabidopsis
     taxon_nameish=%25lyrata
     target_taxon=81972
+    target_ancestral_taxon=4530
     target_species=arabidopsis lyrata
 
     compara=plants
