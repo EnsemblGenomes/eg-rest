@@ -12,6 +12,7 @@ for repo in \
   ensembl-funcgen \
   ensembl-tools \
   ensembl-variation \
+  ensembl-vep \
   ensembl-rest \
   ensembl-io;
 do
