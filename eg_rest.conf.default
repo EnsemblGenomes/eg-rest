@@ -24,9 +24,9 @@ jsonp=1
   lookup_host = mysql-eg-mirror.ebi.ac.uk
   lookup_port = 4157
   lookup_user = ensro
-  lookup_dbname = ensemblgenomes_info_33
+  lookup_dbname = ensemblgenomes_info_34
  
-  version = 86
+  version = 87
   
   # verbose = 0
   
