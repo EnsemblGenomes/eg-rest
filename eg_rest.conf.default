@@ -150,9 +150,9 @@ jsonp=1
     translation_coordinates=1..100
 
     #regulation_id=ENSR00001885035
-    variation_region=4:16056194-16057194:1
+    variation_region=4:16056194-16056194:1
     variation_allele=C
-    variation_region_two=4:16056194-16057194:1
+    variation_region_two=4:16056194-16056194:1
     variation_allele_two=T
     variation_region_three=4:16056290-16056290:1
     variation_allele_three=A
