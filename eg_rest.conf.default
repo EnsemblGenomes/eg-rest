@@ -71,7 +71,7 @@ jsonp=1
   # Trigger a preload of the registry the moment the Model::Registry object is contrstructed. Otherwise we
   # wait until the 1st request for an adaptor comes in. Use in conjunction with pre-fork PSGI deployments
   # to stop registry reload issues
-  preload = 0
+  preload = 1
   
 </Model::Registry>
 

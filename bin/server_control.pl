@@ -29,7 +29,8 @@ Daemon::Control->new(
       '--max-requests',$max_requests,
       '--access-log', $access_log, 
       '--error-log',  $error_log, 
-      '-M',           'EnsEMBL::REST::PreloadRegistry',      
+      '-M',           'EnsEMBL::REST::PreloadRegistry',
+      '--preload-app',  
       $psgi_file 
     ],
     pid_file     => $pid_file,
