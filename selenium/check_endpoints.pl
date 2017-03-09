@@ -43,6 +43,7 @@ my $base_url = $ARGV[0] || die "Please supply a URL to test";
 my $selenium   = Test::WWW::Selenium->new(
   host        => $host,
   port        => $port,
+  browser     => $browser,  
   browser_url => $base_url,
   _ua         => LWP::UserAgent->new(keep_alive => 5, env_proxy => 1, agent => "$0 ")
 );
