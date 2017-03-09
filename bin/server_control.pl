@@ -22,6 +22,7 @@ Daemon::Control->new(
     lsb_stop     => '$syslog',
     lsb_sdesc    => 'EG REST server control',
     lsb_desc     => 'Ensembl Genomes REST server control',
+    stop_signals => [ qw(QUIT TERM TERM INT KILL) ],
     program      => $starman,
     program_args => [ 
       '--listen',     ":$port", 
