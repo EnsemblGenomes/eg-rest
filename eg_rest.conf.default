@@ -96,7 +96,7 @@ jsonp=1
   #Used to control the parameters used in examples. Please edit as you see fit for your infrastructure
 
   <replacements>
-    genome_name=campylobacter_jejuni_subsp_jejuni_bh_01_0142
+    genome_name=nanoarchaeum_equitans_kin4_m
     gene_stable_id=AT3G52430
     gene_stable_id_2= AT1G01160
     transcript_stable_id=AT1G08050.1
