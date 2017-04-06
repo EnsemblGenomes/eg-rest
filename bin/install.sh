@@ -64,6 +64,7 @@ cp -vi eg-rest/bin/env.sh.default   eg-rest/bin/env.sh
 rm -v ensembl-rest/root/documentation/overlap.conf
 rm -v ensembl-rest/root/documentation/compara.conf
 rm -v ensembl-rest/root/documentation/vep.conf
+rm -v ensembl-rest/root/documentation/regulatory.conf
 
 ## Remove Ensembl versions of endpoints we fully override, otherwise we can't override them.
 rm -v ensembl-rest/lib/EnsEMBL/REST/Controller/Family.pm
