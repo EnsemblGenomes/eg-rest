@@ -252,7 +252,7 @@ jsonp=1
 
 <Controller::Homology>
   # Sets the default compara to use when finding the best compara fails. Defaults to multi
-  default_compara=plants
+  default_compara=pan_homology
 </Controller::Homology>
 
 <!--Controller::Regulatory>
