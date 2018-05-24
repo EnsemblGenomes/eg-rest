@@ -58,6 +58,7 @@ limitations under the License.
                         <li class="active"><a href="/">Endpoints</a></li>
                         <li><a href="[% wiki_url %]">User Guide</a></li>
                         <li><a href="http://www.ensemblgenomes.org">About the Ensembl Genomes Project</a></li>
+			<li><a target="_blank" href="https://www.ebi.ac.uk/data-protection/ensembl/privacy-notice">Privacy Notice</a></li>
                     </ul>
             </div><!-- container-->
         </div><!-- navbar-inner-->
