@@ -67,5 +67,4 @@ rm -v ensembl-rest/root/documentation/vep.conf
 rm -v ensembl-rest/root/documentation/regulatory.conf
 
 ## Remove Ensembl versions of endpoints we fully override, otherwise we can't override them.
-rm -v ensembl-rest/lib/EnsEMBL/REST/Controller/Family.pm
 rm -f ensembl-rest/lib/EnsEMBL/REST/Model/Lookup.pm
