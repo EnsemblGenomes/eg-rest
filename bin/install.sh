@@ -14,10 +14,30 @@ for repo in \
   ensembl-variation \
   ensembl-vep \
   ensembl-rest \
+  ensembl-metadata\
   ensembl-io;
 do
   if [ ! -d "$repo" ]; then
     echo "Checking out $repo (branch ${ENSEMBL_BRANCH})"
+    git clone --branch ${ENSEMBL_BRANCH} https://github.com/Ensembl/${repo}
+  else
+    echo Already got $repo, attempting to pull...
+    cd $repo
+    git pull
+    git status
+    cd ../
+  fi
+
+  echo
+  echo
+done
+
+## Check out *Ensembl* code from GitHub (master branch)
+for repo in \
+  ensembl-taxonomy
+do
+  if [ ! -d "$repo" ]; then
+    echo "Checking out $repo (branch master)"
     git clone --branch ${ENSEMBL_BRANCH} https://github.com/Ensembl/${repo}
   else
     echo Already got $repo, attempting to pull...
