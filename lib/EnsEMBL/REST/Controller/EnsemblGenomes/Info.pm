@@ -21,7 +21,7 @@ package EnsEMBL::REST::Controller::EnsemblGenomes::Info;
 
 use Moose;
 use namespace::autoclean;
-use Bio::EnsEMBL::EGVersion;
+#use Bio::EnsEMBL::EGVersion;
 use Try::Tiny;
 require EnsEMBL::REST;
 EnsEMBL::REST->turn_on_config_serialisers(__PACKAGE__);
@@ -40,7 +40,8 @@ sub ensgen_version_GET {
   $c->log()->info("Retrieving EG version from registry");
   # lazy load the registry
   $c->model('Registry')->_registry();
-  $self->status_ok( $c, entity => { version => eg_version() } );
+  my $lookup = $c->model('Registry')->_lookup();
+  $self->status_ok( $c, entity => { version => $lookup->adaptor->data_release->ensembl_genomes_version } );
   return;
 }
 
@@ -54,7 +55,7 @@ sub genomes_all_GET {
   my $lookup = $c->model('Registry')->_lookup();
   my $expand = $c->request->param('expand');
   my @infos =
-	map { $_->to_hash($expand) } @{ $lookup->_adaptor()->fetch_all() };
+	map { _expand_genome($_, $expand) } @{ $lookup->adaptor()->fetch_all() };
   $self->status_ok( $c, entity => \@infos );
   return;
 }
@@ -69,10 +70,10 @@ sub genomes_name_GET {
   my $lookup = $c->model('Registry')->_lookup();
   my $expand = $c->request->param('expand');
   $c->log()->info("Retrieving information about all genomes");
-  my $info = $lookup->_adaptor()->fetch_by_any_name($name);
+  my $info = $lookup->adaptor()->fetch_by_any_name($name);
   $c->go( 'ReturnError', 'custom', ["Genome $name not found"] )
 	unless defined $info;
-  $self->status_ok( $c, entity => $info->to_hash($expand) );
+  $self->status_ok( $c, entity => _expand_genome($info, $expand) );
   return;
 }
 
@@ -85,7 +86,7 @@ sub divisions_GET {
   $c->model('Registry')->_registry();
   my $lookup = $c->model('Registry')->_lookup();
   $c->log()->info("Retrieving list of divisions");
-  my $divs = $lookup->_adaptor()->list_divisions();
+  my $divs = $lookup->adaptor()->list_divisions();
   $self->status_ok( $c, entity => $divs );
   return;
 }
@@ -102,8 +103,8 @@ sub genomes_division_GET {
   $c->log()
 	->info(
 		"Retrieving information about genomes from division $division");
-  my @infos = map { $_->to_hash($expand) }
-	@{ $lookup->_adaptor()->fetch_all_by_division($division) };
+  my @infos = map { _expand_genome($_, $expand) }
+	@{ $lookup->adaptor()->fetch_all_by_division($division) };
   $self->status_ok( $c, entity => \@infos );
   return;
 }
@@ -117,11 +118,11 @@ sub genomes_assembly_GET {
   $c->model('Registry')->_registry();
   my $lookup = $c->model('Registry')->_lookup();
   my $expand = $c->request->param('expand');
-  my $info   = $lookup->_adaptor()->fetch_by_assembly_id($acc);
+  my $info = $lookup->adaptor()->fetch_by_assembly_accession($acc);
   $c->go( 'ReturnError', 'custom',
 		  ["Genome with assembly accession $acc not found"] )
 	unless defined $info;
-  $self->status_ok( $c, entity => $info->to_hash($expand) );
+  $self->status_ok( $c, entity => _expand_genome($info, $expand));
   return;
 }
 
@@ -134,8 +135,8 @@ sub genomes_accession_GET {
   $c->model('Registry')->_registry();
   my $lookup = $c->model('Registry')->_lookup();
   my $expand = $c->request->param('expand');
-  my @infos  = map { $_->to_hash($expand) }
-	@{ $lookup->_adaptor()->fetch_all_by_sequence_accession($acc) };
+  my @infos  = map { _expand_genome($_, $expand) }
+	@{ $lookup->adaptor()->fetch_all_by_sequence_accession($acc) };
   $self->status_ok( $c, entity => \@infos );
   return;
 }
@@ -151,12 +152,22 @@ sub genomes_taxonomy_GET {
   my $expand = $c->request->param('expand');
   $c->log()
 	->info("Retrieving information about genomes from taxon $taxon");
-  my @infos = map { $_->to_hash($expand) }
-	@{ $lookup->_adaptor()->fetch_all_by_taxonomy_branch($taxon) };
+  my @infos = map { _expand_genome($_, $expand) }
+	@{ $lookup->adaptor()->fetch_all_by_taxonomy_branch($taxon) };
   $c->log()
 	->info( "Found " . scalar(@infos) . " genomes from taxon $taxon" );
   $self->status_ok( $c, entity => \@infos );
   return;
+}
+
+sub _expand_genome {
+  my ($genome, $expand) = @_;
+  return {
+    %{ $genome->to_hash($expand) },
+    # add some additional info 
+    %{ $genome->organism->to_hash() },
+    %{ $genome->assembly->to_hash() }
+  }
 }
 
 __PACKAGE__->meta->make_immutable;
