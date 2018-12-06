@@ -22,8 +22,6 @@ package EnsEMBL::REST::Controller::EnsemblGenomes::LookUp;
 use Moose;
 use namespace::autoclean;
 use Bio::EnsEMBL::GenomeExporter::GenomeExporterBulk;
-use Bio::EnsEMBL::EGVersion;
-use Try::Tiny;
 require EnsEMBL::REST;
 EnsEMBL::REST->turn_on_config_serialisers(__PACKAGE__);
 use Data::Dumper;
